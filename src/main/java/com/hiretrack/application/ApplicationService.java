@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+
 @Service
 @RequiredArgsConstructor
 public class ApplicationService {
@@ -24,6 +26,7 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
 
+    @CacheEvict(value = "dashboardCache", key = "#userEmail")
     @Transactional
     public ApplicationResponseDto createApplication(ApplicationRequestDto request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -72,6 +75,7 @@ public class ApplicationService {
         return mapToResponseDto(application);
     }
 
+    @CacheEvict(value = "dashboardCache", key = "#userEmail")
     @Transactional
     public ApplicationResponseDto updateApplication(Long id, ApplicationRequestDto request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -100,6 +104,7 @@ public class ApplicationService {
         return mapToResponseDto(updated);
     }
 
+    @CacheEvict(value = "dashboardCache", key = "#userEmail")
     @Transactional
     public void deleteApplication(Long id, String userEmail) {
         User user = userRepository.findByEmail(userEmail)

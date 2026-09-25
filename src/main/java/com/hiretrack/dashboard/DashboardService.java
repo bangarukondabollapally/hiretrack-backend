@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
+
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -29,6 +31,7 @@ public class DashboardService {
     private final InterviewRepository interviewRepository;
     private final UserRepository userRepository;
 
+    @Cacheable(value = "dashboardCache", key = "#userEmail")
     @Transactional(readOnly = true)
     public DashboardResponseDto getDashboard(String userEmail) {
         User user = userRepository.findByEmail(userEmail)

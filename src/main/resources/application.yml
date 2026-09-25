@@ -35,3 +35,10 @@ jwt:
 groq:
   api-key: ${GROQ_API_KEY}
   model: ${GROQ_MODEL}
+
+# Actuator configuration (TASK-033) — expose only health, keep sensitive metrics secured
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
