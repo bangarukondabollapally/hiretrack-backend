@@ -27,7 +27,6 @@ server:
   port: 8080
 
 # JWT configuration (TASK-007)
-# JWT_SECRET must be set in production; the default below is for local dev only.
 jwt:
-  secret: ${JWT_SECRET:hiretrack-dev-secret-key-at-least-32-chars-change-in-prod}
+  secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}

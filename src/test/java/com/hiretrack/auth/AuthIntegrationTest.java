@@ -30,8 +30,12 @@ public class AuthIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.hiretrack.application.ApplicationRepository applicationRepository;
+
     @BeforeEach
     void setUp() {
+        applicationRepository.deleteAll();
         userRepository.deleteAll();
     }
 
