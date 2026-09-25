@@ -1,0 +1,19 @@
+# Test configuration — overrides application.yml for all Spring Boot tests.
+# Uses H2 in-memory database so tests run without a local MySQL instance.
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:hiretrack_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+
+jwt:
+  secret: test-secret-key-for-hiretrack-unit-and-integration-tests-only-not-for-production
+  expiration-ms: 3600000

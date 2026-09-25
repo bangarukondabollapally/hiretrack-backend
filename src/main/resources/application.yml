@@ -1,8 +1,8 @@
 # HireTrack Backend — application.yml
 #
-# TASK-002: DataSource/JPA exclusions from TASK-001 are REMOVED.
-# Real MySQL connection configured here via environment variables.
-# Copy .env.example to .env and fill in DB_* values before running.
+# TASK-002: DataSource/JPA exclusions removed; real MySQL configured.
+# TASK-007: JWT config added.
+# Copy .env.example to .env and set DB_* and JWT_* variables before running.
 
 spring:
   application:
@@ -16,8 +16,6 @@ spring:
 
   jpa:
     hibernate:
-      # 'update' for development — creates/updates tables automatically.
-      # Change to 'validate' or 'none' before production.
       ddl-auto: update
     show-sql: false
     properties:
@@ -27,3 +25,9 @@ spring:
 
 server:
   port: 8080
+
+# JWT configuration (TASK-007)
+# JWT_SECRET must be set in production; the default below is for local dev only.
+jwt:
+  secret: ${JWT_SECRET:hiretrack-dev-secret-key-at-least-32-chars-change-in-prod}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
