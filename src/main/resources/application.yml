@@ -1,0 +1,19 @@
+# HireTrack Backend — application.yml
+#
+# TASK-001: DataSource and JPA autoconfiguration are excluded so the app boots
+# without a MySQL connection. These exclusions are REMOVED in TASK-002 when the
+# real database connection is configured.
+
+spring:
+  application:
+    name: hiretrack
+
+  # Exclude DataSource and JPA auto-configuration for TASK-001 (no DB yet).
+  # TASK-002 removes these two exclusions and adds spring.datasource.* properties.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+server:
+  port: 8080

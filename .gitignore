@@ -1,0 +1,23 @@
+# Maven build output
+target/
+*.jar
+*.war
+*.ear
+
+# Environment — never commit secrets
+.env
+
+# IDE files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot devtools restart
+.spring-boot-devtools.properties
