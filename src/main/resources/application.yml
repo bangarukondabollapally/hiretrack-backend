@@ -30,3 +30,8 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+# Groq AI configuration (TASK-027)
+groq:
+  api-key: ${GROQ_API_KEY}
+  model: ${GROQ_MODEL}

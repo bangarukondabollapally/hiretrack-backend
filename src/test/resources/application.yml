@@ -17,3 +17,7 @@ spring:
 jwt:
   secret: test-secret-key-for-hiretrack-unit-and-integration-tests-only-not-for-production
   expiration-ms: 3600000
+
+groq:
+  api-key: mock-test-groq-key
+  model: mock-test-groq-model

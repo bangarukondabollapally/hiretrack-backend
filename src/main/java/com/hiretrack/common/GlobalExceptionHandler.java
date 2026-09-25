@@ -63,7 +63,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.of(409, ex.getMessage()));
     }
 
-    /** 500 — Unexpected errors; message is generic, detail is not exposed */
+    @ExceptionHandler(com.hiretrack.common.exception.AiServiceException.class)
+    public ResponseEntity<ErrorResponseDto> handleAiServiceException(com.hiretrack.common.exception.AiServiceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ErrorResponseDto.of(502, ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
