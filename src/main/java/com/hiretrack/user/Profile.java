@@ -26,6 +26,9 @@ public class Profile {
     @Column(columnDefinition = "TEXT")
     private String resumeText;
 
+    @Column(length = 255)
+    private String targetRole;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
