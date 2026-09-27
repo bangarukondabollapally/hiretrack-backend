@@ -6,12 +6,12 @@ services:
     container_name: hiretrack-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       MYSQL_DATABASE: ${DB_NAME:-hiretrack}
       MYSQL_USER: ${DB_USERNAME:-hiretrack_app}
       MYSQL_PASSWORD: ${DB_PASSWORD:-hiretrack@2026}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
