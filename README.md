@@ -3,7 +3,7 @@
 Spring Boot REST API for HireTrack, an AI-powered job application management system.
 
 ## Tech Stack
-- **Java 17**, Spring Boot 3.3.4, Maven
+- **Java 21**, Spring Boot 3.3.4, Maven
 - **Spring Security** with Stateless JWT Authentication & BCrypt Password Hashing
 - **Spring Data JPA** & **MySQL 8.0**
 - **AI Integration**: Groq API (`llama-3.3-70b-versatile`) for interactive career coaching and contextual prompt generation
@@ -76,7 +76,7 @@ docker compose down -v
 ## Local Development (Without Docker)
 
 ### Prerequisites
-- **Java 17 JDK**
+- **Java 21 JDK**
 - **Maven 3.9+**
 - **MySQL 8.0+** running locally
 
