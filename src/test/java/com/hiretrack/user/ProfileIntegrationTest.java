@@ -1,9 +1,12 @@
 package com.hiretrack.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hiretrack.application.ApplicationRepository;
 import com.hiretrack.auth.dto.LoginRequestDto;
 import com.hiretrack.auth.dto.LoginResponseDto;
 import com.hiretrack.auth.dto.RegisterRequestDto;
+import com.hiretrack.interview.InterviewRepository;
+import com.hiretrack.tag.TagRepository;
 import com.hiretrack.user.dto.ProfileDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,11 +40,23 @@ public class ProfileIntegrationTest {
     @Autowired
     private ProfileRepository profileRepository;
 
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private InterviewRepository interviewRepository;
+
+    @Autowired
+    private TagRepository tagRepository;
+
     private String user1Token;
     private String user2Token;
 
     @BeforeEach
     void setUp() throws Exception {
+        interviewRepository.deleteAll();
+        tagRepository.deleteAll();
+        applicationRepository.deleteAll();
         profileRepository.deleteAll();
         userRepository.deleteAll();
 
