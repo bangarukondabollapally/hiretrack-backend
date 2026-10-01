@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ProfileDto {
+    private String name;
     private String resumeText;
     private String targetRole;
 }

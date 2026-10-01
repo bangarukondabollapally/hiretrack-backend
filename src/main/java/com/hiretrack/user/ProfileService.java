@@ -20,10 +20,11 @@ public class ProfileService {
 
         return profileRepository.findByUserId(user.getId())
                 .map(profile -> ProfileDto.builder()
+                        .name(profile.getName() != null ? profile.getName() : "")
                         .resumeText(profile.getResumeText() != null ? profile.getResumeText() : "")
                         .targetRole(profile.getTargetRole() != null ? profile.getTargetRole() : "")
                         .build())
-                .orElseGet(() -> ProfileDto.builder().resumeText("").targetRole("").build());
+                .orElseGet(() -> ProfileDto.builder().name("").resumeText("").targetRole("").build());
     }
 
     @Transactional
@@ -34,14 +35,20 @@ public class ProfileService {
         Profile profile = profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> Profile.builder().user(user).build());
 
-        profile.setResumeText(dto.getResumeText());
-        // Only overwrite targetRole if the caller actually provided it (non-null)
+        // All fields are optional in request body — omitting a field leaves the stored value unchanged
+        if (dto.getName() != null) {
+            profile.setName(dto.getName());
+        }
+        if (dto.getResumeText() != null) {
+            profile.setResumeText(dto.getResumeText());
+        }
         if (dto.getTargetRole() != null) {
             profile.setTargetRole(dto.getTargetRole());
         }
         Profile saved = profileRepository.save(profile);
 
         return ProfileDto.builder()
+                .name(saved.getName() != null ? saved.getName() : "")
                 .resumeText(saved.getResumeText() != null ? saved.getResumeText() : "")
                 .targetRole(saved.getTargetRole() != null ? saved.getTargetRole() : "")
                 .build();

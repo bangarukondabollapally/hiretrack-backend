@@ -99,15 +99,19 @@ public class ProfileIntegrationTest {
 
     @Test
     void getAndUpdateProfile_UserIsolationVerified() throws Exception {
-        // GET initial profile for User 1 (empty resumeText)
+        // GET initial profile for User 1 (empty name, resumeText, targetRole)
         mockMvc.perform(get("/api/profile")
                         .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resumeText", is("")));
+                .andExpect(jsonPath("$.name", is("")))
+                .andExpect(jsonPath("$.resumeText", is("")))
+                .andExpect(jsonPath("$.targetRole", is("")));
 
-        // PUT update resume for User 1
+        // PUT update profile for User 1
         ProfileDto updateDto = ProfileDto.builder()
+                .name("Jane Doe")
                 .resumeText("User 1 Resume Content")
+                .targetRole("Frontend Engineer")
                 .build();
 
         mockMvc.perform(put("/api/profile")
@@ -115,12 +119,16 @@ public class ProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resumeText", is("User 1 Resume Content")));
+                .andExpect(jsonPath("$.name", is("Jane Doe")))
+                .andExpect(jsonPath("$.resumeText", is("User 1 Resume Content")))
+                .andExpect(jsonPath("$.targetRole", is("Frontend Engineer")));
 
         // Verify User 2's profile is still empty (user isolation)
         mockMvc.perform(get("/api/profile")
                         .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resumeText", is("")));
+                .andExpect(jsonPath("$.name", is("")))
+                .andExpect(jsonPath("$.resumeText", is("")))
+                .andExpect(jsonPath("$.targetRole", is("")));
     }
 }

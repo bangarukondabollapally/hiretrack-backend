@@ -26,8 +26,15 @@ public class PromptBuilder {
         Profile profile = profileRepository.findByUserId(userId).orElse(null);
         if (profile != null && profile.getResumeText() != null && !profile.getResumeText().trim().isEmpty()) {
             sb.append("=== USER MASTER RESUME ===\n");
+            if (profile.getName() != null && !profile.getName().trim().isEmpty()) {
+                sb.append("User Name: ").append(profile.getName().trim()).append("\n");
+            }
             if (profile.getTargetRole() != null && !profile.getTargetRole().trim().isEmpty()) {
-                sb.append("Target Role: ").append(profile.getTargetRole().trim()).append("\n\n");
+                sb.append("Target Role: ").append(profile.getTargetRole().trim()).append("\n");
+            }
+            if ((profile.getName() != null && !profile.getName().trim().isEmpty()) ||
+                (profile.getTargetRole() != null && !profile.getTargetRole().trim().isEmpty())) {
+                sb.append("\n");
             }
             sb.append(profile.getResumeText().trim());
             sb.append("\n===========================\n\n");

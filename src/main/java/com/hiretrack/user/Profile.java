@@ -22,6 +22,9 @@ public class Profile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(length = 100)
+    private String name;
+
     @Lob
     @Column(columnDefinition = "TEXT")
     private String resumeText;
