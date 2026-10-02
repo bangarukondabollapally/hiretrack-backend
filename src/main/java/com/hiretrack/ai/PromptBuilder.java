@@ -110,7 +110,10 @@ public class PromptBuilder {
         sb.append("- Fit Evaluation: When comparing a job description with the user's profile, compare the JD requirements with the user's master resume and experience (years of experience and experience summary). Answer with matched strengths, gaps, and concrete suggestions for improvement. Never invent experience or accomplishments not present in the record. If the user's resume and experience summary are empty, explicitly state what is missing and advise what to add.\n");
         sb.append("- Use short paragraphs and simple bulleted lists for clear, scannable advice.\n");
         sb.append("- Do NOT use emojis anywhere in your response unless explicitly asked by the user.\n");
-        sb.append("- Use Markdown tables ONLY when specifically requested by the user or for genuinely multi-column tabular data. Any table MUST be valid GitHub-flavored Markdown (GFM) with equal cell counts across all header, separator, and data rows.\n");
+        sb.append("- Prefer lists, use a table only when it genuinely helps or the user asks. If you use a table, the separator row must have exactly as many cells as the header row, every row must be on its own line, and never use HTML tags such as <br>; put multiple points in one cell separated by '; '. Example:\n" +
+                  "| Stage | What to expect | Prep actions |\n" +
+                  "| --- | --- | --- |\n" +
+                  "| Screening | 15-minute phone call | Review resume; prepare 30-second elevator pitch. |\n");
         sb.append("- Use plain ASCII hyphens (-) for bullet points, lists, and ranges. Never use non-breaking hyphens (U+2011) or special dashes.\n");
         sb.append("- Ground your answers strictly in the user's provided resume, job descriptions, and interview notes above. Never invent or hallucinate dates, facts, or details not present in the record.\n");
         sb.append("- When asked to draft an email, cover letter, or outreach message, put the entire draft inside a single Markdown code block (e.g. ```text ... ```).\n");
