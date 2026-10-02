@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"tags"})
     List<Application> findByUserIdOrderByAppliedDateDescIdDesc(Long userId);
 
     Optional<Application> findByIdAndUserId(Long id, Long userId);

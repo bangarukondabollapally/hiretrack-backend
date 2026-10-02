@@ -14,7 +14,13 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "applications")
+@Table(
+    name = "applications",
+    indexes = {
+        @Index(name = "idx_app_user_status", columnList = "user_id, status"),
+        @Index(name = "idx_app_user_followup", columnList = "user_id, followUpDate")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
