@@ -51,15 +51,15 @@ public class DashboardService {
             statusCounts.put(status, count);
         }
 
-        // 2. Upcoming Interviews (next 7 days, PENDING outcome)
+        // 2. Upcoming Interviews (ALL future interviews, ascending, limit 10)
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime next7Days = now.plusDays(7);
-        List<Interview> interviews = interviewRepository.findUpcomingInterviews(userId, now, next7Days);
+        List<Interview> interviews = interviewRepository.findUpcomingInterviews(userId, now, org.springframework.data.domain.PageRequest.of(0, 10));
 
         List<DashboardResponseDto.UpcomingInterviewDto> upcoming = interviews.stream()
                 .map(i -> DashboardResponseDto.UpcomingInterviewDto.builder()
                         .applicationId(i.getApplication().getId())
                         .companyName(i.getApplication().getCompanyName())
+                        .jobRole(i.getApplication().getJobRole())
                         .interviewDate(i.getInterviewDate())
                         .build())
                 .collect(Collectors.toList());
@@ -75,10 +75,22 @@ public class DashboardService {
                         .build())
                 .collect(Collectors.toList());
 
+        // 4. Upcoming Follow Ups (followUpDate > today and status NOT IN (OFFER, REJECTED, WITHDRAWN), limit 5)
+        List<Application> upcomingFollowUps = applicationRepository.findUpcomingFollowUps(userId, today, org.springframework.data.domain.PageRequest.of(0, 5));
+
+        List<DashboardResponseDto.FollowUpDueDto> upcomingFollowUpDtos = upcomingFollowUps.stream()
+                .map(a -> DashboardResponseDto.FollowUpDueDto.builder()
+                        .applicationId(a.getId())
+                        .companyName(a.getCompanyName())
+                        .followUpDate(a.getFollowUpDate())
+                        .build())
+                .collect(Collectors.toList());
+
         return DashboardResponseDto.builder()
                 .statusCounts(statusCounts)
                 .upcomingInterviews(upcoming)
                 .followUpsDue(followUpDtos)
+                .upcomingFollowUps(upcomingFollowUpDtos)
                 .build();
     }
 }

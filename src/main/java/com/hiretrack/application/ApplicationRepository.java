@@ -20,4 +20,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     @Query("SELECT a FROM Application a WHERE a.user.id = :userId AND a.followUpDate IS NOT NULL AND a.followUpDate <= :today AND a.status NOT IN ('OFFER', 'REJECTED', 'WITHDRAWN') ORDER BY a.followUpDate ASC")
     List<Application> findFollowUpsDue(@Param("userId") Long userId, @Param("today") LocalDate today);
+
+    @Query("SELECT a FROM Application a WHERE a.user.id = :userId AND a.followUpDate IS NOT NULL AND a.followUpDate > :today AND a.status NOT IN ('OFFER', 'REJECTED', 'WITHDRAWN') ORDER BY a.followUpDate ASC")
+    List<Application> findUpcomingFollowUps(@Param("userId") Long userId, @Param("today") LocalDate today, org.springframework.data.domain.Pageable pageable);
 }

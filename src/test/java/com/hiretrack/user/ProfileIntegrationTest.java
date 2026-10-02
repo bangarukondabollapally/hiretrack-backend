@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -99,19 +100,22 @@ public class ProfileIntegrationTest {
 
     @Test
     void getAndUpdateProfile_UserIsolationVerified() throws Exception {
-        // GET initial profile for User 1 (empty name, resumeText, targetRole)
+        // GET initial profile for User 1 (empty name, resumeText, targetRole, yearsOfExperience, experienceSummary)
         mockMvc.perform(get("/api/profile")
                         .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("")))
                 .andExpect(jsonPath("$.resumeText", is("")))
-                .andExpect(jsonPath("$.targetRole", is("")));
+                .andExpect(jsonPath("$.targetRole", is("")))
+                .andExpect(jsonPath("$.experienceSummary", is("")));
 
         // PUT update profile for User 1
         ProfileDto updateDto = ProfileDto.builder()
                 .name("Jane Doe")
                 .resumeText("User 1 Resume Content")
                 .targetRole("Frontend Engineer")
+                .yearsOfExperience(5)
+                .experienceSummary("5 years building React web apps")
                 .build();
 
         mockMvc.perform(put("/api/profile")
@@ -121,7 +125,9 @@ public class ProfileIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("Jane Doe")))
                 .andExpect(jsonPath("$.resumeText", is("User 1 Resume Content")))
-                .andExpect(jsonPath("$.targetRole", is("Frontend Engineer")));
+                .andExpect(jsonPath("$.targetRole", is("Frontend Engineer")))
+                .andExpect(jsonPath("$.yearsOfExperience", is(5)))
+                .andExpect(jsonPath("$.experienceSummary", is("5 years building React web apps")));
 
         // Verify User 2's profile is still empty (user isolation)
         mockMvc.perform(get("/api/profile")
@@ -129,6 +135,87 @@ public class ProfileIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("")))
                 .andExpect(jsonPath("$.resumeText", is("")))
-                .andExpect(jsonPath("$.targetRole", is("")));
+                .andExpect(jsonPath("$.targetRole", is("")))
+                .andExpect(jsonPath("$.experienceSummary", is("")));
+    }
+
+    @Test
+    void profile_PartialUpdateAndClearing() throws Exception {
+        // Initial full save
+        ProfileDto initial = ProfileDto.builder()
+                .name("Alice")
+                .targetRole("DevOps")
+                .yearsOfExperience(8)
+                .experienceSummary("Infrastructure engineering")
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(initial)))
+                .andExpect(status().isOk());
+
+        // Partial update: update targetRole only, omit yearsOfExperience and experienceSummary
+        String partialJson = "{\"targetRole\":\"Site Reliability Engineer\"}";
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(partialJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.targetRole", is("Site Reliability Engineer")))
+                .andExpect(jsonPath("$.name", is("Alice")))
+                .andExpect(jsonPath("$.yearsOfExperience", is(8)))
+                .andExpect(jsonPath("$.experienceSummary", is("Infrastructure engineering")));
+
+        // Clear yearsOfExperience by explicitly sending null, clear experienceSummary by sending ""
+        String clearJson = "{\"yearsOfExperience\":null, \"experienceSummary\":\"\"}";
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(clearJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.targetRole", is("Site Reliability Engineer")))
+                .andExpect(jsonPath("$.name", is("Alice")))
+                .andExpect(jsonPath("$.yearsOfExperience", is(nullValue())))
+                .andExpect(jsonPath("$.experienceSummary", is("")));
+    }
+
+    @Test
+    void profile_InvalidValues_Returns400() throws Exception {
+        // Invalid yearsOfExperience > 60
+        ProfileDto badYears = ProfileDto.builder()
+                .yearsOfExperience(75)
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badYears)))
+                .andExpect(status().isBadRequest());
+
+        // Invalid negative yearsOfExperience < 0
+        ProfileDto negativeYears = ProfileDto.builder()
+                .yearsOfExperience(-5)
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(negativeYears)))
+                .andExpect(status().isBadRequest());
+
+        // Invalid experienceSummary > 3000 chars
+        String longText = "a".repeat(3001);
+        ProfileDto badSummary = ProfileDto.builder()
+                .experienceSummary(longText)
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badSummary)))
+                .andExpect(status().isBadRequest());
     }
 }

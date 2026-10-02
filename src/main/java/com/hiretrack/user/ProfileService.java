@@ -19,23 +19,29 @@ public class ProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return profileRepository.findByUserId(user.getId())
-                .map(profile -> ProfileDto.builder()
-                        .name(profile.getName() != null ? profile.getName() : "")
-                        .resumeText(profile.getResumeText() != null ? profile.getResumeText() : "")
-                        .targetRole(profile.getTargetRole() != null ? profile.getTargetRole() : "")
-                        .build())
-                .orElseGet(() -> ProfileDto.builder().name("").resumeText("").targetRole("").build());
+                .map(this::mapToDto)
+                .orElseGet(() -> ProfileDto.builder()
+                        .name("")
+                        .resumeText("")
+                        .targetRole("")
+                        .yearsOfExperience(null)
+                        .experienceSummary("")
+                        .build());
     }
 
     @Transactional
     public ProfileDto updateProfile(ProfileDto dto, String userEmail) {
+        return updateProfile(dto, dto.getYearsOfExperience() != null, userEmail);
+    }
+
+    @Transactional
+    public ProfileDto updateProfile(ProfileDto dto, boolean hasYearsOfExperience, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Profile profile = profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> Profile.builder().user(user).build());
 
-        // All fields are optional in request body — omitting a field leaves the stored value unchanged
         if (dto.getName() != null) {
             profile.setName(dto.getName());
         }
@@ -45,12 +51,24 @@ public class ProfileService {
         if (dto.getTargetRole() != null) {
             profile.setTargetRole(dto.getTargetRole());
         }
-        Profile saved = profileRepository.save(profile);
+        if (hasYearsOfExperience) {
+            profile.setYearsOfExperience(dto.getYearsOfExperience());
+        }
+        if (dto.getExperienceSummary() != null) {
+            profile.setExperienceSummary(dto.getExperienceSummary());
+        }
 
+        Profile saved = profileRepository.save(profile);
+        return mapToDto(saved);
+    }
+
+    private ProfileDto mapToDto(Profile profile) {
         return ProfileDto.builder()
-                .name(saved.getName() != null ? saved.getName() : "")
-                .resumeText(saved.getResumeText() != null ? saved.getResumeText() : "")
-                .targetRole(saved.getTargetRole() != null ? saved.getTargetRole() : "")
+                .name(profile.getName() != null ? profile.getName() : "")
+                .resumeText(profile.getResumeText() != null ? profile.getResumeText() : "")
+                .targetRole(profile.getTargetRole() != null ? profile.getTargetRole() : "")
+                .yearsOfExperience(profile.getYearsOfExperience())
+                .experienceSummary(profile.getExperienceSummary() != null ? profile.getExperienceSummary() : "")
                 .build();
     }
 }

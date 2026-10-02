@@ -14,6 +14,9 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
     Optional<Interview> findByIdAndApplicationId(Long id, Long applicationId);
 
+    @Query("SELECT i FROM Interview i JOIN FETCH i.application a WHERE a.user.id = :userId AND i.interviewDate >= :start AND i.outcome = 'PENDING' ORDER BY i.interviewDate ASC")
+    List<Interview> findUpcomingInterviews(@Param("userId") Long userId, @Param("start") LocalDateTime start, org.springframework.data.domain.Pageable pageable);
+
     @Query("SELECT i FROM Interview i JOIN FETCH i.application a WHERE a.user.id = :userId AND i.interviewDate >= :start AND i.interviewDate <= :end AND i.outcome = 'PENDING' ORDER BY i.interviewDate ASC")
     List<Interview> findUpcomingInterviews(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 

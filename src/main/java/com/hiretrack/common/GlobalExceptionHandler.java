@@ -35,6 +35,16 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.of(400, message));
     }
 
+    /** 400 — ConstraintViolationException for programmatic validation */
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations().stream()
+                .map(jakarta.validation.ConstraintViolation::getMessage)
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest()
+                .body(ErrorResponseDto.of(400, message));
+    }
+
     /** 401 — Wrong credentials at login */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentials(BadCredentialsException ex) {

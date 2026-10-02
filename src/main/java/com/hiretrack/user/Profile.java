@@ -32,6 +32,13 @@ public class Profile {
     @Column(length = 255)
     private String targetRole;
 
+    @Column
+    private Integer yearsOfExperience;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String experienceSummary;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

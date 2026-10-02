@@ -20,6 +20,7 @@ public class DashboardResponseDto {
     private Map<ApplicationStatus, Long> statusCounts;
     private List<UpcomingInterviewDto> upcomingInterviews;
     private List<FollowUpDueDto> followUpsDue;
+    private List<FollowUpDueDto> upcomingFollowUps;
 
     @Data
     @NoArgsConstructor
@@ -28,6 +29,7 @@ public class DashboardResponseDto {
     public static class UpcomingInterviewDto {
         private Long applicationId;
         private String companyName;
+        private String jobRole;
         private LocalDateTime interviewDate;
     }
 

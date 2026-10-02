@@ -22,25 +22,33 @@ public class PromptBuilder {
         sb.append("You are the HireTrack AI Assistant — a focused, practical career & job application coach.\n");
         sb.append("Your goal is to help job seekers stay organized, prepare for interviews, and move their applications forward.\n\n");
 
-        // 1. User Resume Context
+        // 1. User Profile & Resume Context
         Profile profile = profileRepository.findByUserId(userId).orElse(null);
-        if (profile != null && profile.getResumeText() != null && !profile.getResumeText().trim().isEmpty()) {
-            sb.append("=== USER MASTER RESUME ===\n");
+        sb.append("=== USER PROFILE & EXPERIENCE ===\n");
+        if (profile != null) {
             if (profile.getName() != null && !profile.getName().trim().isEmpty()) {
                 sb.append("User Name: ").append(profile.getName().trim()).append("\n");
             }
             if (profile.getTargetRole() != null && !profile.getTargetRole().trim().isEmpty()) {
                 sb.append("Target Role: ").append(profile.getTargetRole().trim()).append("\n");
             }
-            if ((profile.getName() != null && !profile.getName().trim().isEmpty()) ||
-                (profile.getTargetRole() != null && !profile.getTargetRole().trim().isEmpty())) {
-                sb.append("\n");
+            if (profile.getYearsOfExperience() != null) {
+                sb.append("Years of Experience: ").append(profile.getYearsOfExperience()).append("\n");
             }
-            sb.append(profile.getResumeText().trim());
-            sb.append("\n===========================\n\n");
+            if (profile.getExperienceSummary() != null && !profile.getExperienceSummary().trim().isEmpty()) {
+                sb.append("Experience Summary:\n").append(profile.getExperienceSummary().trim()).append("\n");
+            }
+            if (profile.getResumeText() != null && !profile.getResumeText().trim().isEmpty()) {
+                sb.append("Master Resume:\n").append(profile.getResumeText().trim()).append("\n");
+            }
+            if ((profile.getResumeText() == null || profile.getResumeText().trim().isEmpty()) &&
+                (profile.getExperienceSummary() == null || profile.getExperienceSummary().trim().isEmpty())) {
+                sb.append("(No resume text or experience summary uploaded yet)\n");
+            }
         } else {
-            sb.append("=== USER MASTER RESUME ===\n(No resume text uploaded yet)\n===========================\n\n");
+            sb.append("(No profile created yet)\n");
         }
+        sb.append("===================================\n\n");
 
         // 2. Application Context (Targeted vs General Summary)
         if (applicationId != null) {
@@ -99,9 +107,10 @@ public class PromptBuilder {
 
         sb.append("Instructions:\n");
         sb.append("- Answer like a thoughtful career coach: lead directly with the answer or core recommendation.\n");
+        sb.append("- Fit Evaluation: When comparing a job description with the user's profile, compare the JD requirements with the user's master resume and experience (years of experience and experience summary). Answer with matched strengths, gaps, and concrete suggestions for improvement. Never invent experience or accomplishments not present in the record. If the user's resume and experience summary are empty, explicitly state what is missing and advise what to add.\n");
         sb.append("- Use short paragraphs and simple bulleted lists for clear, scannable advice.\n");
-        sb.append("- Use Markdown tables ONLY when specifically requested by the user or for genuinely multi-column tabular data. Always ensure tables are valid GitHub-flavored Markdown.\n");
-        sb.append("- Do NOT use emojis unless the user uses them in their prompt.\n");
+        sb.append("- Do NOT use emojis anywhere in your response unless explicitly asked by the user.\n");
+        sb.append("- Use Markdown tables ONLY when specifically requested by the user or for genuinely multi-column tabular data. Any table MUST be valid GitHub-flavored Markdown (GFM) with equal cell counts across all header, separator, and data rows.\n");
         sb.append("- Use plain ASCII hyphens (-) for bullet points, lists, and ranges. Never use non-breaking hyphens (U+2011) or special dashes.\n");
         sb.append("- Ground your answers strictly in the user's provided resume, job descriptions, and interview notes above. Never invent or hallucinate dates, facts, or details not present in the record.\n");
         sb.append("- When asked to draft an email, cover letter, or outreach message, put the entire draft inside a single Markdown code block (e.g. ```text ... ```).\n");
