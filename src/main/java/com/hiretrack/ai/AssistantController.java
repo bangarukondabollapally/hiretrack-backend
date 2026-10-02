@@ -27,4 +27,17 @@ public class AssistantController {
         ChatResponseDto response = assistantService.chat(request, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping(value = "/chat/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> chatStream(
+            @Valid @RequestBody ChatRequestDto request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = 
+                assistantService.chatStream(request, userDetails.getUsername());
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-cache")
+                .header("X-Accel-Buffering", "no")
+                .body(emitter);
+    }
 }

@@ -44,7 +44,8 @@ public class PromptBuilder {
 
         // 2. Application Context (Targeted vs General Summary)
         if (applicationId != null) {
-            Application app = applicationRepository.findByIdAndUserId(applicationId, userId).orElse(null);
+            Application app = applicationRepository.findByIdAndUserId(applicationId, userId)
+                    .orElseThrow(() -> new com.hiretrack.common.exception.ResourceNotFoundException("Application not found with id: " + applicationId));
             if (app != null) {
                 sb.append("=== TARGET APPLICATION CONTEXT ===\n");
                 sb.append("Company: ").append(app.getCompanyName()).append("\n");

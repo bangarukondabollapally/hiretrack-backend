@@ -18,8 +18,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -116,5 +120,88 @@ public class AssistantIntegrationTest {
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.status", is(502)))
                 .andExpect(jsonPath("$.message", is("Groq API error")));
+    }
+
+    @Test
+    void chatStream_Unauthenticated_Returns401Or403() throws Exception {
+        ChatRequestDto request = ChatRequestDto.builder()
+                .message("Hello assistant")
+                .build();
+
+        mockMvc.perform(post("/api/assistant/chat/stream")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void chatStream_OwnershipFailure_Returns403Or404() throws Exception {
+        ChatRequestDto request = ChatRequestDto.builder()
+                .message("Prepare for non owned app")
+                .applicationId(999999L)
+                .build();
+
+        mockMvc.perform(post("/api/assistant/chat/stream")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void chatStream_Success() throws Exception {
+        doAnswer(invocation -> {
+            java.util.function.Consumer<String> onToken = invocation.getArgument(2);
+            java.util.function.Consumer<String> onReasoning = invocation.getArgument(3);
+            onReasoning.accept("Analyzing application details");
+            onToken.accept("Hello");
+            onToken.accept(" world!");
+            return null;
+        }).when(groqClient).streamResponse(anyString(), anyString(), any(), any());
+
+        ChatRequestDto request = ChatRequestDto.builder()
+                .message("Hi")
+                .build();
+
+        MvcResult result = mockMvc.perform(post("/api/assistant/chat/stream")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", containsString("text/event-stream")))
+                .andReturn();
+
+        result.getAsyncResult(2000L);
+
+        String content = result.getResponse().getContentAsString();
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:status"));
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:token"));
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:reasoning"));
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:done"));
+    }
+
+    @Test
+    void chatStream_GroqFailureMidStream_EmitsErrorEvent() throws Exception {
+        doThrow(new AiServiceException("Mid-stream connection broken"))
+                .when(groqClient).streamResponse(anyString(), anyString(), any(), any());
+
+        ChatRequestDto request = ChatRequestDto.builder()
+                .message("Hi")
+                .build();
+
+        MvcResult result = mockMvc.perform(post("/api/assistant/chat/stream")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        try {
+            mockMvc.perform(asyncDispatch(result));
+        } catch (Exception ignored) {
+        }
+
+        String content = result.getResponse().getContentAsString();
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:error"));
     }
 }
