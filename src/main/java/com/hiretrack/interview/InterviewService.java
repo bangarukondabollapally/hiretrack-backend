@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,10 +94,34 @@ public class InterviewService {
         return application;
     }
 
+    @Transactional(readOnly = true)
+    public List<InterviewResponseDto> getAllInterviews(String scope, Long applicationId, InterviewOutcome outcome, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+        String actualScope = (scope != null && !scope.isBlank()) ? scope.toLowerCase() : "all";
+
+        List<Interview> interviews;
+        if ("upcoming".equals(actualScope)) {
+            interviews = interviewRepository.findUpcomingUserInterviews(user.getId(), applicationId, outcome, now);
+        } else if ("past".equals(actualScope)) {
+            interviews = interviewRepository.findPastUserInterviews(user.getId(), applicationId, outcome, now);
+        } else {
+            interviews = interviewRepository.findAllUserInterviews(user.getId(), applicationId, outcome);
+        }
+
+        return interviews.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
     public InterviewResponseDto mapToDto(Interview interview) {
         return InterviewResponseDto.builder()
                 .id(interview.getId())
                 .applicationId(interview.getApplication().getId())
+                .companyName(interview.getApplication().getCompanyName())
+                .jobRole(interview.getApplication().getJobRole())
                 .round(interview.getRound())
                 .interviewDate(interview.getInterviewDate())
                 .interviewType(interview.getInterviewType())
@@ -105,3 +130,4 @@ public class InterviewService {
                 .build();
     }
 }
+

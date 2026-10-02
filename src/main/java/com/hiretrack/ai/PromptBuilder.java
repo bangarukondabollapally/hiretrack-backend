@@ -98,9 +98,13 @@ public class PromptBuilder {
         }
 
         sb.append("Instructions:\n");
-        sb.append("- Provide clear, concise, actionable advice.\n");
-        sb.append("- Ground your answers in the user's resume, job descriptions, and interview notes above.\n");
-        sb.append("- Do not invent facts not present in the user's record.\n");
+        sb.append("- Answer like a thoughtful career coach: lead directly with the answer or core recommendation.\n");
+        sb.append("- Use short paragraphs and simple bulleted lists for clear, scannable advice.\n");
+        sb.append("- Use Markdown tables ONLY when specifically requested by the user or for genuinely multi-column tabular data. Always ensure tables are valid GitHub-flavored Markdown.\n");
+        sb.append("- Do NOT use emojis unless the user uses them in their prompt.\n");
+        sb.append("- Use plain ASCII hyphens (-) for bullet points, lists, and ranges. Never use non-breaking hyphens (U+2011) or special dashes.\n");
+        sb.append("- Ground your answers strictly in the user's provided resume, job descriptions, and interview notes above. Never invent or hallucinate dates, facts, or details not present in the record.\n");
+        sb.append("- When asked to draft an email, cover letter, or outreach message, put the entire draft inside a single Markdown code block (e.g. ```text ... ```).\n");
 
         return sb.toString();
     }

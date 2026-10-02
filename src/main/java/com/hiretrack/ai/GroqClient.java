@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hiretrack.common.exception.AiServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,21 +19,37 @@ import java.time.Duration;
 @Component
 public class GroqClient {
 
+    private static final Logger log = LoggerFactory.getLogger(GroqClient.class);
+
     private final String apiKey;
     private final String model;
+    private final double temperature;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public GroqClient(
             @Value("${groq.api-key}") String apiKey,
-            @Value("${groq.model}") String model
+            @Value("${groq.model}") String model,
+            @Value("${groq.temperature:0.4}") double temperature
     ) {
         this.apiKey = apiKey;
         this.model = model;
+        this.temperature = temperature;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
         this.objectMapper = new ObjectMapper();
+
+        log.info("Groq AI Client initialized with model: '{}', temperature: {}", model, temperature);
+        if (isSmallModel(model)) {
+            log.warn("Configured Groq model '{}' is a small model. For higher quality career coaching responses, consider using a larger model such as 'llama-3.3-70b-versatile' or 'llama3-70b-8192'.", model);
+        }
+    }
+
+    private boolean isSmallModel(String modelName) {
+        if (modelName == null) return false;
+        String lower = modelName.toLowerCase();
+        return lower.contains("8b") || lower.contains("7b") || lower.contains("9b") || lower.contains("instant") || lower.contains("small");
     }
 
     public String generateResponse(String systemPrompt, String userMessage) {
@@ -58,7 +76,7 @@ public class GroqClient {
             userMsg.put("role", "user");
             userMsg.put("content", userMessage);
 
-            root.put("temperature", 0.7);
+            root.put("temperature", temperature);
 
             String requestBody = objectMapper.writeValueAsString(root);
 
@@ -118,7 +136,7 @@ public class GroqClient {
             userMsg.put("role", "user");
             userMsg.put("content", userMessage);
 
-            root.put("temperature", 0.7);
+            root.put("temperature", temperature);
 
             String requestBody = objectMapper.writeValueAsString(root);
 
@@ -139,10 +157,9 @@ public class GroqClient {
 
             try (java.util.stream.Stream<String> lines = response.body()) {
                 lines.forEach(line -> {
-                    String trimmed = line.trim();
-                    if (trimmed.startsWith("data: ")) {
-                        String dataStr = trimmed.substring(6).trim();
-                        if ("[DONE]".equals(dataStr)) {
+                    if (line.startsWith("data: ")) {
+                        String dataStr = line.substring(6);
+                        if ("[DONE]".equals(dataStr.trim())) {
                             return;
                         }
                         try {
@@ -171,7 +188,8 @@ public class GroqClient {
                                     }
                                 }
                             }
-                        } catch (Exception ignored) {
+                        } catch (Exception ex) {
+                            log.warn("Failed to parse Groq SSE JSON payload: '{}'", dataStr, ex);
                         }
                     }
                 });
@@ -183,3 +201,4 @@ public class GroqClient {
         }
     }
 }
+

@@ -15,9 +15,12 @@ import java.time.LocalDateTime;
 public class InterviewResponseDto {
     private Long id;
     private Long applicationId;
+    private String companyName;
+    private String jobRole;
     private String round;
     private LocalDateTime interviewDate;
     private String interviewType;
     private InterviewOutcome outcome;
     private String notes;
 }
+

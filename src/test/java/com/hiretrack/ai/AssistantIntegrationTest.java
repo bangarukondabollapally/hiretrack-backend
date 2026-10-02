@@ -204,4 +204,48 @@ public class AssistantIntegrationTest {
         String content = result.getResponse().getContentAsString();
         org.junit.jupiter.api.Assertions.assertTrue(content.contains("event:error"));
     }
+
+    @Test
+    void chatStream_MultiByteCharacters_PreservesExactText() throws Exception {
+        final String multiByteText = "Thank\u2011you for your time! \uD83D\uDE80 (to\u2011on\u2011site)";
+        doAnswer(invocation -> {
+            java.util.function.Consumer<String> onToken = invocation.getArgument(2);
+            onToken.accept("Thank\u2011you ");
+            onToken.accept("for your time! ");
+            onToken.accept("\uD83D\uDE80 ");
+            onToken.accept("(to\u2011on\u2011site)");
+            return null;
+        }).when(groqClient).streamResponse(anyString(), anyString(), any(), any());
+
+        ChatRequestDto request = ChatRequestDto.builder()
+                .message("Multi-byte test")
+                .build();
+
+        MvcResult result = mockMvc.perform(post("/api/assistant/chat/stream")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        result.getAsyncResult(2000L);
+
+        String content = result.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String line : content.split("\n")) {
+            if (line.startsWith("data:") && line.contains("\"text\":")) {
+                String jsonStr = line.substring(5).trim();
+                com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(jsonStr);
+                if (node.has("text")) {
+                    sb.append(node.get("text").asText());
+                }
+            }
+        }
+
+        org.junit.jupiter.api.Assertions.assertEquals(multiByteText, sb.toString());
+    }
 }
+
+

@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.time.LocalDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -148,4 +149,63 @@ public class InterviewIntegrationTest {
                         .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void getAllInterviews_Success_ReturnsOwnDataOnly() throws Exception {
+        // Add past interview for user 1
+        interviewRepository.save(Interview.builder()
+                .round("Screening Call")
+                .interviewDate(LocalDateTime.now().minusDays(5))
+                .interviewType("HR")
+                .outcome(InterviewOutcome.PASSED)
+                .application(user1App)
+                .build());
+
+        mockMvc.perform(get("/api/interviews")
+                        .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$[0].companyName", org.hamcrest.Matchers.is("TechCorp")))
+                .andExpect(jsonPath("$[0].jobRole", org.hamcrest.Matchers.is("Developer")));
+    }
+
+    @Test
+    void getAllInterviews_ScopeFilters_UpcomingAndPast() throws Exception {
+        interviewRepository.save(Interview.builder()
+                .round("Past Screen")
+                .interviewDate(LocalDateTime.now().minusDays(10))
+                .interviewType("HR")
+                .outcome(InterviewOutcome.PASSED)
+                .application(user1App)
+                .build());
+
+        // Scope = upcoming
+        mockMvc.perform(get("/api/interviews?scope=upcoming")
+                        .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)))
+                .andExpect(jsonPath("$[0].round", org.hamcrest.Matchers.is("Technical Screen")));
+
+        // Scope = past
+        mockMvc.perform(get("/api/interviews?scope=past")
+                        .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)))
+                .andExpect(jsonPath("$[0].round", org.hamcrest.Matchers.is("Past Screen")));
+    }
+
+    @Test
+    void getAllInterviews_OtherUserGetsEmptyList() throws Exception {
+        mockMvc.perform(get("/api/interviews")
+                        .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(0)));
+    }
+
+    @Test
+    void getAllInterviews_Unauthenticated_Returns401() throws Exception {
+        mockMvc.perform(get("/api/interviews"))
+                .andExpect(status().isUnauthorized());
+    }
 }
+
