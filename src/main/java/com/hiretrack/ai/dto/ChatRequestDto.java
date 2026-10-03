@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ChatRequestDto {
 
-    @NotBlank(message = "Message is required")
     private String message;
 
     private Long applicationId;

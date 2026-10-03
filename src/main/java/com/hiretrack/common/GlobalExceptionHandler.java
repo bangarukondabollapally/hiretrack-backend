@@ -73,6 +73,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.of(409, ex.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponseDto.of(400, ex.getMessage()));
+    }
+
     @ExceptionHandler(com.hiretrack.common.exception.AiServiceException.class)
     public ResponseEntity<ErrorResponseDto> handleAiServiceException(com.hiretrack.common.exception.AiServiceException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
