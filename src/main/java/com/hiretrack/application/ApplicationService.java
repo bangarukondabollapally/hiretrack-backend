@@ -42,6 +42,7 @@ public class ApplicationService {
                 .appliedDate(request.getAppliedDate())
                 .followUpDate(request.getFollowUpDate())
                 .jobDescription(request.getJobDescription())
+                .placementOpeningId(request.getPlacementOpeningId())
                 .user(user)
                 .build();
 
@@ -98,6 +99,9 @@ public class ApplicationService {
         application.setFollowUpDate(request.getFollowUpDate());
         if (request.getJobDescription() != null) {
             application.setJobDescription(request.getJobDescription());
+        }
+        if (request.getPlacementOpeningId() != null) {
+            application.setPlacementOpeningId(request.getPlacementOpeningId());
         }
 
         Application updated = applicationRepository.save(application);
@@ -161,6 +165,7 @@ public class ApplicationService {
                 .jobDescription(application.getJobDescription())
                 .appliedDate(application.getAppliedDate())
                 .followUpDate(application.getFollowUpDate())
+                .placementOpeningId(application.getPlacementOpeningId())
                 .tags(tagDtos)
                 .interviews(interviewDtos)
                 .build();

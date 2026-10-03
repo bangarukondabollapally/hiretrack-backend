@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hiretrack.user.Role;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,6 +32,7 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(Role.USER)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -51,10 +54,13 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.getEmail(), user.getId());
 
+        Role role = user.getRole() != null ? user.getRole() : Role.USER;
+
         return LoginResponseDto.builder()
                 .token(token)
                 .userId(user.getId())
                 .email(user.getEmail())
+                .role(role.name())
                 .build();
     }
 }

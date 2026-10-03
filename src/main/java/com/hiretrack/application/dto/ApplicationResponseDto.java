@@ -27,6 +27,7 @@ public class ApplicationResponseDto {
     private String jobDescription;
     private LocalDate appliedDate;
     private LocalDate followUpDate;
+    private Long placementOpeningId;
     private List<TagResponseDto> tags;
     private List<InterviewResponseDto> interviews;
 }

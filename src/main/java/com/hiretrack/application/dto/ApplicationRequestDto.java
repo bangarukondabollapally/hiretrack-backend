@@ -36,4 +36,6 @@ public class ApplicationRequestDto {
     private LocalDate followUpDate;
 
     private String jobDescription;
+
+    private Long placementOpeningId;
 }

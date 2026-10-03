@@ -60,6 +60,9 @@ public class Application {
 
     private LocalDate followUpDate;
 
+    @Column(name = "placement_opening_id")
+    private Long placementOpeningId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -6,11 +6,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.List;
 
 /**
  * UserDetailsServiceImpl — bridges our User entity to Spring Security.
- * Used by the JWT filter (TASK-008) to load user details during token validation.
+ * Used by the JWT filter to load user details during token validation.
  * Spring Security uses the email as the "username".
  */
 @Service
@@ -24,11 +25,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        // No roles in v1 — empty authorities list (see docs/DECISIONS.md ADR-004)
+        Role role = user.getRole() != null ? user.getRole() : Role.USER;
+        List<SimpleGrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + role.name())
+        );
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPasswordHash(),
-                Collections.emptyList()
+                authorities
         );
     }
 }

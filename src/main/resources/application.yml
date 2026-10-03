@@ -47,3 +47,9 @@ management:
     web:
       exposure:
         include: health
+
+hiretrack:
+  admin:
+    email: ${ADMIN_EMAIL:admin@hiretrack.local}
+    password: ${ADMIN_PASSWORD:admin123456}
+

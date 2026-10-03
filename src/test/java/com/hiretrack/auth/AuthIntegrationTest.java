@@ -94,7 +94,29 @@ public class AuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", notNullValue()))
-                .andExpect(jsonPath("$.email", is("test@example.com")));
+                .andExpect(jsonPath("$.email", is("test@example.com")))
+                .andExpect(jsonPath("$.role", is("USER")));
+    }
+
+    @Test
+    void register_WithAdminInEmailOrPayload_AlwaysProducesUserRole() throws Exception {
+        String payload = "{\"email\":\"studentadmin123@gmail.com\",\"password\":\"password123\",\"role\":\"ADMIN\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated());
+
+        LoginRequestDto loginRequest = LoginRequestDto.builder()
+                .email("studentadmin123@gmail.com")
+                .password("password123")
+                .build();
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role", is("USER")));
     }
 
     @Test
