@@ -25,7 +25,7 @@ public class AssistantService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String systemPrompt = promptBuilder.buildSystemPrompt(user.getId(), request.getApplicationId());
-        String reply = groqClient.generateResponse(systemPrompt, request.getMessage());
+        String reply = groqClient.generateResponse(systemPrompt, request.getMessage(), request.getAttachments());
 
         // Asynchronous audit logging (TASK-032)
         asyncAuditService.logAiInteractionAsync(userEmail, request.getApplicationId(), request.getMessage());
@@ -61,6 +61,7 @@ public class AssistantService {
                 groqClient.streamResponse(
                         systemPrompt,
                         request.getMessage(),
+                        request.getAttachments(),
                         token -> {
                             try {
                                 if (!startedGenerating[0]) {

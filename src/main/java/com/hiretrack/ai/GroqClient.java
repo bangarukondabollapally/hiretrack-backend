@@ -23,6 +23,7 @@ public class GroqClient {
 
     private final String apiKey;
     private final String model;
+    private final String visionModel;
     private final double temperature;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -30,10 +31,12 @@ public class GroqClient {
     public GroqClient(
             @Value("${groq.api-key}") String apiKey,
             @Value("${groq.model}") String model,
+            @Value("${groq.vision-model:}") String visionModel,
             @Value("${groq.temperature:0.4}") double temperature
     ) {
         this.apiKey = apiKey;
         this.model = model;
+        this.visionModel = visionModel;
         this.temperature = temperature;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
@@ -52,7 +55,7 @@ public class GroqClient {
         return lower.contains("8b") || lower.contains("7b") || lower.contains("9b") || lower.contains("instant") || lower.contains("small");
     }
 
-    public String generateResponse(String systemPrompt, String userMessage) {
+    public String generateResponse(String systemPrompt, String userMessage, java.util.List<com.hiretrack.ai.dto.ChatAttachmentDto> attachments) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new AiServiceException("GROQ_API_KEY environment variable is missing");
         }
@@ -62,7 +65,16 @@ public class GroqClient {
 
         try {
             ObjectNode root = objectMapper.createObjectNode();
-            root.put("model", model);
+            
+            boolean hasImages = attachments != null && attachments.stream().anyMatch(a -> "image".equals(a.getType()));
+            if (hasImages) {
+                if (visionModel == null || visionModel.trim().isEmpty()) {
+                    throw new AiServiceException("Image analysis is not enabled");
+                }
+                root.put("model", visionModel);
+            } else {
+                root.put("model", model);
+            }
 
             ArrayNode messages = root.putArray("messages");
 
@@ -72,9 +84,38 @@ public class GroqClient {
                 sysMsg.put("content", systemPrompt);
             }
 
+            StringBuilder combinedText = new StringBuilder(userMessage);
+            if (attachments != null) {
+                for (com.hiretrack.ai.dto.ChatAttachmentDto att : attachments) {
+                    if ("text".equals(att.getType())) {
+                        combinedText.append("\n\n--- Attachment: ").append(att.getName()).append(" ---\n");
+                        combinedText.append(att.getContent());
+                    }
+                }
+            }
+            String finalUserMessage = combinedText.toString();
+
             ObjectNode userMsg = messages.addObject();
             userMsg.put("role", "user");
-            userMsg.put("content", userMessage);
+            
+            if (hasImages) {
+                ArrayNode contentArray = userMsg.putArray("content");
+                
+                ObjectNode textContent = contentArray.addObject();
+                textContent.put("type", "text");
+                textContent.put("text", finalUserMessage);
+                
+                for (com.hiretrack.ai.dto.ChatAttachmentDto att : attachments) {
+                    if ("image".equals(att.getType())) {
+                        ObjectNode imgContent = contentArray.addObject();
+                        imgContent.put("type", "image_url");
+                        ObjectNode imgUrl = imgContent.putObject("image_url");
+                        imgUrl.put("url", "data:" + att.getMimeType() + ";base64," + att.getData());
+                    }
+                }
+            } else {
+                userMsg.put("content", finalUserMessage);
+            }
 
             root.put("temperature", temperature);
 
@@ -111,7 +152,7 @@ public class GroqClient {
         }
     }
 
-    public void streamResponse(String systemPrompt, String userMessage, java.util.function.Consumer<String> onToken, java.util.function.Consumer<String> onReasoning) {
+    public void streamResponse(String systemPrompt, String userMessage, java.util.List<com.hiretrack.ai.dto.ChatAttachmentDto> attachments, java.util.function.Consumer<String> onToken, java.util.function.Consumer<String> onReasoning) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new AiServiceException("GROQ_API_KEY environment variable is missing");
         }
@@ -121,7 +162,17 @@ public class GroqClient {
 
         try {
             ObjectNode root = objectMapper.createObjectNode();
-            root.put("model", model);
+            
+            boolean hasImages = attachments != null && attachments.stream().anyMatch(a -> "image".equals(a.getType()));
+            if (hasImages) {
+                if (visionModel == null || visionModel.trim().isEmpty()) {
+                    throw new AiServiceException("Image analysis is not enabled");
+                }
+                root.put("model", visionModel);
+            } else {
+                root.put("model", model);
+            }
+            
             root.put("stream", true);
 
             ArrayNode messages = root.putArray("messages");
@@ -132,9 +183,38 @@ public class GroqClient {
                 sysMsg.put("content", systemPrompt);
             }
 
+            StringBuilder combinedText = new StringBuilder(userMessage);
+            if (attachments != null) {
+                for (com.hiretrack.ai.dto.ChatAttachmentDto att : attachments) {
+                    if ("text".equals(att.getType())) {
+                        combinedText.append("\n\n--- Attachment: ").append(att.getName()).append(" ---\n");
+                        combinedText.append(att.getContent());
+                    }
+                }
+            }
+            String finalUserMessage = combinedText.toString();
+
             ObjectNode userMsg = messages.addObject();
             userMsg.put("role", "user");
-            userMsg.put("content", userMessage);
+            
+            if (hasImages) {
+                ArrayNode contentArray = userMsg.putArray("content");
+                
+                ObjectNode textContent = contentArray.addObject();
+                textContent.put("type", "text");
+                textContent.put("text", finalUserMessage);
+                
+                for (com.hiretrack.ai.dto.ChatAttachmentDto att : attachments) {
+                    if ("image".equals(att.getType())) {
+                        ObjectNode imgContent = contentArray.addObject();
+                        imgContent.put("type", "image_url");
+                        ObjectNode imgUrl = imgContent.putObject("image_url");
+                        imgUrl.put("url", "data:" + att.getMimeType() + ";base64," + att.getData());
+                    }
+                }
+            } else {
+                userMsg.put("content", finalUserMessage);
+            }
 
             root.put("temperature", temperature);
 

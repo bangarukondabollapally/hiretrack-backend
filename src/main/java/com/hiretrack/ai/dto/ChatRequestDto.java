@@ -16,4 +16,6 @@ public class ChatRequestDto {
     private String message;
 
     private Long applicationId;
+
+    private java.util.List<ChatAttachmentDto> attachments;
 }
