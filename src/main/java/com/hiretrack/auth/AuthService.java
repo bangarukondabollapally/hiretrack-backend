@@ -38,9 +38,11 @@ public class AuthService {
 
         String userEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
 
-        // Check if email matches configured admin emails list or student coordinator pattern
+        // Check if explicit ADMIN role requested or if email matches admin emails config
         Role assignedRole = Role.USER;
-        if (adminEmailConfig != null && !adminEmailConfig.isBlank()) {
+        if (request.getRole() != null && request.getRole().equalsIgnoreCase("ADMIN")) {
+            assignedRole = Role.ADMIN;
+        } else if (adminEmailConfig != null && !adminEmailConfig.isBlank()) {
             List<String> adminEmails = Arrays.stream(adminEmailConfig.split(","))
                     .map(e -> e.trim().toLowerCase())
                     .toList();
