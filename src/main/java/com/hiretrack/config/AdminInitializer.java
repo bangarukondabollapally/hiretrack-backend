@@ -35,28 +35,30 @@ public class AdminInitializer {
             return;
         }
 
-        String trimmedEmail = adminEmail.trim().toLowerCase();
-        Optional<User> existingUserOpt = userRepository.findByEmail(trimmedEmail);
+        String[] emails = adminEmail.split(",");
+        for (String rawEmail : emails) {
+            String trimmedEmail = rawEmail.trim().toLowerCase();
+            if (trimmedEmail.isEmpty()) continue;
 
-        if (existingUserOpt.isPresent()) {
-            User existingUser = existingUserOpt.get();
-            if (existingUser.getRole() == Role.ADMIN) {
-                // Admin already exists and is configured
-                return;
+            Optional<User> existingUserOpt = userRepository.findByEmail(trimmedEmail);
+
+            if (existingUserOpt.isPresent()) {
+                User existingUser = existingUserOpt.get();
+                if (existingUser.getRole() != Role.ADMIN) {
+                    existingUser.setRole(Role.ADMIN);
+                    userRepository.save(existingUser);
+                    log.info("Promoted existing account {} to ADMIN role.", trimmedEmail);
+                }
             } else {
-                // User exists as USER role — DO NOT silently promote an existing student account!
-                log.warn("Configured admin email matches existing student account with USER role. Promotion skipped for security.");
-                return;
+                User adminUser = User.builder()
+                        .email(trimmedEmail)
+                        .passwordHash(passwordEncoder.encode(adminPassword))
+                        .role(Role.ADMIN)
+                        .build();
+
+                userRepository.save(adminUser);
+                log.info("Admin account {} provisioned successfully via configuration.", trimmedEmail);
             }
         }
-
-        User adminUser = User.builder()
-                .email(trimmedEmail)
-                .passwordHash(passwordEncoder.encode(adminPassword))
-                .role(Role.ADMIN)
-                .build();
-
-        userRepository.save(adminUser);
-        log.info("Admin account provisioned successfully via configuration.");
     }
 }

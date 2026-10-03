@@ -8,12 +8,16 @@ import com.hiretrack.common.exception.EmailAlreadyExistsException;
 import com.hiretrack.user.User;
 import com.hiretrack.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hiretrack.user.Role;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,16 +27,32 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+    @Value("${hiretrack.admin.email:}")
+    private String adminEmailConfig;
+
     @Transactional
     public RegisterResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
 
+        String userEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
+
+        // Check if email matches configured admin emails list or student coordinator pattern
+        Role assignedRole = Role.USER;
+        if (adminEmailConfig != null && !adminEmailConfig.isBlank()) {
+            List<String> adminEmails = Arrays.stream(adminEmailConfig.split(","))
+                    .map(e -> e.trim().toLowerCase())
+                    .toList();
+            if (adminEmails.contains(userEmail)) {
+                assignedRole = Role.ADMIN;
+            }
+        }
+
         User user = User.builder()
-                .email(request.getEmail())
+                .email(userEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(assignedRole)
                 .build();
 
         User savedUser = userRepository.save(user);
