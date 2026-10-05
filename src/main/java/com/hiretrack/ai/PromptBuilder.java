@@ -2,7 +2,10 @@ package com.hiretrack.ai;
 
 import com.hiretrack.application.Application;
 import com.hiretrack.application.ApplicationRepository;
+import com.hiretrack.assistant.ChatMessage;
 import com.hiretrack.interview.Interview;
+import com.hiretrack.opening.PlacementOpening;
+import com.hiretrack.opening.PlacementOpeningRepository;
 import com.hiretrack.user.Profile;
 import com.hiretrack.user.ProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +19,13 @@ public class PromptBuilder {
 
     private final ProfileRepository profileRepository;
     private final ApplicationRepository applicationRepository;
+    private final PlacementOpeningRepository placementOpeningRepository;
 
     public String buildSystemPrompt(Long userId, Long applicationId) {
+        return buildSystemPrompt(userId, applicationId, null);
+    }
+
+    public String buildSystemPrompt(Long userId, Long applicationId, List<ChatMessage> historyMessages) {
         StringBuilder sb = new StringBuilder();
         sb.append("You are the HireTrack AI Assistant — a focused, practical career & job application coach.\n");
         sb.append("Your goal is to help job seekers stay organized, prepare for interviews, and move their applications forward.\n\n");
@@ -82,6 +90,29 @@ public class PromptBuilder {
                         sb.append("\n");
                     }
                 }
+
+                // TASK 6: Placement Opening details in untrusted block
+                if (app.getPlacementOpeningId() != null) {
+                    PlacementOpening opening = placementOpeningRepository.findById(app.getPlacementOpeningId()).orElse(null);
+                    if (opening != null) {
+                        sb.append("\n<PLACEMENT_OPENING_DETAILS>\n");
+                        sb.append("This application originated from a placement cell opening:\n");
+                        sb.append("Company: ").append(opening.getCompanyName()).append("\n");
+                        sb.append("Job Role: ").append(opening.getJobRole()).append("\n");
+                        if (opening.getJobType() != null) sb.append("Job Type: ").append(opening.getJobType()).append("\n");
+                        if (opening.getLocation() != null) sb.append("Location: ").append(opening.getLocation()).append("\n");
+                        if (opening.getWorkMode() != null) sb.append("Work Mode: ").append(opening.getWorkMode()).append("\n");
+                        if (opening.getPackageDetails() != null) sb.append("Package/Stipend: ").append(opening.getPackageDetails()).append("\n");
+                        if (opening.getEligibility() != null) sb.append("Eligibility: ").append(opening.getEligibility()).append("\n");
+                        if (opening.getDeadline() != null) sb.append("Deadline: ").append(opening.getDeadline()).append("\n");
+                        sb.append("Status: ").append(opening.getStatus()).append("\n");
+                        if (opening.getDescription() != null && !opening.getDescription().trim().isEmpty()) {
+                            sb.append("Opening Description:\n").append(opening.getDescription().trim()).append("\n");
+                        }
+                        sb.append("</PLACEMENT_OPENING_DETAILS>\n");
+                    }
+                }
+
                 sb.append("===================================\n\n");
             }
         } else {
@@ -96,11 +127,23 @@ public class PromptBuilder {
                     sb.append("- [ID: ").append(a.getId()).append("] ")
                             .append(a.getCompanyName()).append(" — ").append(a.getJobRole())
                             .append(" (Status: ").append(a.getStatus()).append(")");
+                    if (a.getPlacementOpeningId() != null) {
+                        sb.append(" [Source: Placement Cell Opening]");
+                    }
                     if (a.getFollowUpDate() != null) {
                         sb.append(" [Follow-up: ").append(a.getFollowUpDate()).append("]");
                     }
                     sb.append("\n");
                 }
+            }
+            sb.append("===================================\n\n");
+        }
+
+        // TASK 5: Recent Chat History Context
+        if (historyMessages != null && !historyMessages.isEmpty()) {
+            sb.append("=== RECENT CONVERSATION HISTORY ===\n");
+            for (ChatMessage msg : historyMessages) {
+                sb.append("[").append(msg.getRole()).append("]: ").append(msg.getContent()).append("\n");
             }
             sb.append("===================================\n\n");
         }

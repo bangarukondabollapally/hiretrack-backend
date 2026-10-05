@@ -1,4 +1,4 @@
-package com.hiretrack.ai.dto;
+package com.hiretrack.assistant.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatResponseDto {
-    private String reply;
-    private Long conversationId;
+public class ConversationRequestDto {
+    private String title;
 }

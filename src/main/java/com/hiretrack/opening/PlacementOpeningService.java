@@ -20,7 +20,7 @@ public class PlacementOpeningService {
     public List<PlacementOpeningResponseDto> getOpenings(boolean includeClosed) {
         List<PlacementOpening> openings = includeClosed
                 ? repository.findAllByOrderByCreatedAtDesc()
-                : repository.findByStatusOrderByCreatedAtDesc(OpeningStatus.OPEN);
+                : repository.findOpenAndActiveOpenings(java.time.LocalDate.now());
 
         return openings.stream()
                 .map(this::mapToResponseDto)

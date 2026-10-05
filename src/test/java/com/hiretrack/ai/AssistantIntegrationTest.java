@@ -41,6 +41,12 @@ public class AssistantIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.hiretrack.assistant.ConversationRepository conversationRepository;
+
+    @Autowired
+    private com.hiretrack.assistant.ChatMessageRepository chatMessageRepository;
+
+    @Autowired
     private com.hiretrack.application.ApplicationRepository applicationRepository;
 
     @MockBean
@@ -50,6 +56,8 @@ public class AssistantIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        chatMessageRepository.deleteAll();
+        conversationRepository.deleteAll();
         applicationRepository.deleteAll();
         userRepository.deleteAll();
 
