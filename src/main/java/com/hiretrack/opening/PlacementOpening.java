@@ -46,6 +46,19 @@ public class PlacementOpening {
     @Column(length = 500)
     private String eligibility;
 
+    @Column(length = 50)
+    private String degree;
+
+    @Column(length = 255)
+    private String eligibleBranches;
+
+    private Integer graduationYearStart;
+
+    private Integer graduationYearEnd;
+
+    @Column(length = 500)
+    private String eligibilityNote;
+
     private LocalDate deadline;
 
     @Lob

@@ -32,6 +32,16 @@ public class PlacementOpeningRequestDto {
 
     private String eligibility;
 
+    private String degree;
+
+    private String eligibleBranches;
+
+    private Integer graduationYearStart;
+
+    private Integer graduationYearEnd;
+
+    private String eligibilityNote;
+
     private LocalDate deadline;
 
     private String description;

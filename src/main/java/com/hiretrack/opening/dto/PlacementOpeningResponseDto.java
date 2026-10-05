@@ -22,6 +22,12 @@ public class PlacementOpeningResponseDto {
     private String workMode;
     private String packageDetails;
     private String eligibility;
+    private String degree;
+    private String eligibleBranches;
+    private Integer graduationYearStart;
+    private Integer graduationYearEnd;
+    private String eligibilityNote;
+    private String publishedBy;
     private LocalDate deadline;
     private String description;
     private String applicationLink;

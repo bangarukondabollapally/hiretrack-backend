@@ -166,15 +166,35 @@ public class AssistantService {
         return emitter;
     }
 
+    public static String deriveTitleFromQuestion(String text) {
+        if (text == null || text.isBlank()) return "New chat";
+        String clean = text.trim();
+        String lower = clean.toLowerCase().replaceAll("[^a-z0-9]", "");
+        List<String> greetings = List.of("hi", "hello", "hey", "greetings", "yo", "sup", "hola", "goodmorning", "goodafternoon", "goodevening");
+        if (greetings.contains(lower)) {
+            return "New chat";
+        }
+        String normalized = clean.replaceAll("\\s+", " ");
+        if (normalized.length() <= 40) {
+            return normalized;
+        }
+        return normalized.substring(0, 37) + "...";
+    }
+
     private Conversation resolveOrCreateConversation(ChatRequestDto request, User user) {
         if (request.getConversationId() != null) {
-            return conversationRepository.findByIdAndUserId(request.getConversationId(), user.getId())
+            Conversation conversation = conversationRepository.findByIdAndUserId(request.getConversationId(), user.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Conversation not found with id: " + request.getConversationId()));
-        } else {
-            String title = request.getMessage() != null ? request.getMessage().trim() : "New chat";
-            if (title.length() > 40) {
-                title = title.substring(0, 37) + "...";
+            if ("New chat".equalsIgnoreCase(conversation.getTitle()) || "New conversation".equalsIgnoreCase(conversation.getTitle())) {
+                String derived = deriveTitleFromQuestion(request.getMessage());
+                if (!"New chat".equalsIgnoreCase(derived)) {
+                    conversation.setTitle(derived);
+                    conversationRepository.save(conversation);
+                }
             }
+            return conversation;
+        } else {
+            String title = deriveTitleFromQuestion(request.getMessage());
             Conversation conversation = Conversation.builder()
                     .user(user)
                     .title(title)
