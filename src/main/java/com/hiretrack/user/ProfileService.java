@@ -22,6 +22,7 @@ public class ProfileService {
                 .map(this::mapToDto)
                 .orElseGet(() -> ProfileDto.builder()
                         .name("")
+                        .avatarPreset(null)
                         .resumeText("")
                         .targetRole("")
                         .yearsOfExperience(null)
@@ -39,11 +40,21 @@ public class ProfileService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (dto.getAvatarPreset() != null && !dto.getAvatarPreset().trim().isEmpty()) {
+            String preset = dto.getAvatarPreset().trim();
+            if (!preset.matches("^preset-(1[0-2]|[1-9])$")) {
+                throw new IllegalArgumentException("Invalid avatar preset key: " + preset);
+            }
+        }
+
         Profile profile = profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> Profile.builder().user(user).build());
 
         if (dto.getName() != null) {
             profile.setName(dto.getName());
+        }
+        if (dto.getAvatarPreset() != null) {
+            profile.setAvatarPreset(dto.getAvatarPreset().trim().isEmpty() ? null : dto.getAvatarPreset().trim());
         }
         if (dto.getResumeText() != null) {
             profile.setResumeText(dto.getResumeText());
@@ -65,6 +76,7 @@ public class ProfileService {
     private ProfileDto mapToDto(Profile profile) {
         return ProfileDto.builder()
                 .name(profile.getName() != null ? profile.getName() : "")
+                .avatarPreset(profile.getAvatarPreset())
                 .resumeText(profile.getResumeText() != null ? profile.getResumeText() : "")
                 .targetRole(profile.getTargetRole() != null ? profile.getTargetRole() : "")
                 .yearsOfExperience(profile.getYearsOfExperience())

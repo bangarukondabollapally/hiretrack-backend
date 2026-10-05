@@ -217,5 +217,38 @@ public class ProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badSummary)))
                 .andExpect(status().isBadRequest());
+
+        // Invalid avatarPreset key (e.g. preset-99 or invalid string)
+        ProfileDto badAvatar = ProfileDto.builder()
+                .avatarPreset("preset-99")
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badAvatar)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void profile_AvatarPreset_ValidAndUserIsolated() throws Exception {
+        // User 1 sets valid avatarPreset "preset-3"
+        ProfileDto dto1 = ProfileDto.builder()
+                .name("User 1")
+                .avatarPreset("preset-3")
+                .build();
+
+        mockMvc.perform(put("/api/profile")
+                        .header("Authorization", "Bearer " + user1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarPreset", is("preset-3")));
+
+        // Verify User 2's avatarPreset is still null (isolated)
+        mockMvc.perform(get("/api/profile")
+                        .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarPreset", is(nullValue())));
     }
 }

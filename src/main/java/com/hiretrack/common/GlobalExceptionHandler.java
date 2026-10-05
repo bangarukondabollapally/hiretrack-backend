@@ -45,6 +45,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.of(400, message));
     }
 
+    /** 400 — IllegalArgumentException */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(ErrorResponseDto.of(400, ex.getMessage()));
+    }
+
     /** 401 — Wrong credentials at login */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentials(BadCredentialsException ex) {

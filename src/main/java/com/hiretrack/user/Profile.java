@@ -39,6 +39,9 @@ public class Profile {
     @Column(columnDefinition = "TEXT")
     private String experienceSummary;
 
+    @Column(length = 50)
+    private String avatarPreset;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -23,4 +23,6 @@ public class ProfileDto {
 
     @Size(max = 3000, message = "experienceSummary must not exceed 3000 characters")
     private String experienceSummary;
+
+    private String avatarPreset;
 }
