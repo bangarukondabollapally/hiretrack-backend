@@ -39,6 +39,17 @@ public class AuthService {
         String userEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
 
         Role assignedRole = Role.USER;
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            String requestedRole = request.getRole().trim().toUpperCase();
+            if ("ADMIN".equals(requestedRole) || "PLACEMENT_CELL".equals(requestedRole)) {
+                assignedRole = Role.ADMIN;
+            } else if ("USER".equals(requestedRole) || "STUDENT".equals(requestedRole)) {
+                assignedRole = Role.USER;
+            } else {
+                assignedRole = Role.USER;
+            }
+        }
+
         if (adminEmailConfig != null && !adminEmailConfig.isBlank()) {
             List<String> adminEmails = Arrays.stream(adminEmailConfig.split(","))
                     .map(e -> e.trim().toLowerCase())
@@ -59,6 +70,7 @@ public class AuthService {
         return RegisterResponseDto.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
+                .role(savedUser.getRole() != null ? savedUser.getRole().name() : "USER")
                 .build();
     }
 
@@ -71,9 +83,9 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String token = jwtService.generateToken(user.getEmail(), user.getId());
-
         Role role = user.getRole() != null ? user.getRole() : Role.USER;
+
+        String token = jwtService.generateToken(user.getEmail(), user.getId(), role);
 
         return LoginResponseDto.builder()
                 .token(token)

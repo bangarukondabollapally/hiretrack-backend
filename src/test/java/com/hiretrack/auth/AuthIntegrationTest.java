@@ -99,16 +99,47 @@ public class AuthIntegrationTest {
     }
 
     @Test
-    void register_WithAdminInEmailOrPayload_AlwaysProducesUserRole() throws Exception {
-        String payload = "{\"email\":\"studentadmin123@gmail.com\",\"password\":\"password123\",\"role\":\"ADMIN\"}";
+    void register_PlacementCell_ProducesAdminRole() throws Exception {
+        RegisterRequestDto regRequest = RegisterRequestDto.builder()
+                .email("placementcell@univ.edu")
+                .password("password123")
+                .role("PLACEMENT_CELL")
+                .build();
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated());
+                        .content(objectMapper.writeValueAsString(regRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role", is("ADMIN")));
 
         LoginRequestDto loginRequest = LoginRequestDto.builder()
-                .email("studentadmin123@gmail.com")
+                .email("placementcell@univ.edu")
+                .password("password123")
+                .build();
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role", is("ADMIN")));
+    }
+
+    @Test
+    void register_ArbitraryRole_DefaultsToUserRole() throws Exception {
+        RegisterRequestDto regRequest = RegisterRequestDto.builder()
+                .email("hacker@example.com")
+                .password("password123")
+                .role("SUPER_ADMIN")
+                .build();
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(regRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role", is("USER")));
+
+        LoginRequestDto loginRequest = LoginRequestDto.builder()
+                .email("hacker@example.com")
                 .password("password123")
                 .build();
 
