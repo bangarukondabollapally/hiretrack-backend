@@ -155,6 +155,13 @@ public class PlacementOpeningService {
             throw new IllegalArgumentException("Description / Mini JD must not exceed 2000 characters");
         }
 
+        if (dto.getMinCgpa() != null && (dto.getMinCgpa() < 0.0 || dto.getMinCgpa() > 10.0)) {
+            throw new IllegalArgumentException("Minimum CGPA must be between 0.0 and 10.0");
+        }
+        if (dto.getMaxBacklogs() != null && dto.getMaxBacklogs() < 0) {
+            throw new IllegalArgumentException("Maximum backlogs cannot be negative");
+        }
+
         User adminUser = adminEmail != null ? userRepository.findByEmail(adminEmail).orElse(null) : null;
 
         PlacementOpening opening = PlacementOpening.builder()
@@ -171,6 +178,8 @@ public class PlacementOpeningService {
                 .graduationYearEnd(dto.getGraduationYearEnd())
                 .yearOfStudy(dto.getYearOfStudy() != null && !dto.getYearOfStudy().isBlank() ? dto.getYearOfStudy() : "All Years")
                 .seats(dto.getSeats())
+                .minCgpa(dto.getMinCgpa())
+                .maxBacklogs(dto.getMaxBacklogs())
                 .eligibilityNote(dto.getEligibilityNote())
                 .deadline(dto.getDeadline())
                 .description(dto.getDescription())
@@ -189,7 +198,13 @@ public class PlacementOpeningService {
         String normalizedLink = normalizeAndValidateLink(dto.getApplicationLink());
 
         if (dto.getDescription() != null && dto.getDescription().length() > 2000) {
-            throw new IllegalArgumentException("Description / Mini JD must not exceed 2000 characters");
+            throw new IllegalArgumentException("Description / Short JD must not exceed 2000 characters");
+        }
+        if (dto.getMinCgpa() != null && (dto.getMinCgpa() < 0.0 || dto.getMinCgpa() > 10.0)) {
+            throw new IllegalArgumentException("Minimum CGPA must be between 0.0 and 10.0");
+        }
+        if (dto.getMaxBacklogs() != null && dto.getMaxBacklogs() < 0) {
+            throw new IllegalArgumentException("Maximum backlogs cannot be negative");
         }
 
         PlacementOpening opening = repository.findById(id)
@@ -210,6 +225,8 @@ public class PlacementOpeningService {
             opening.setYearOfStudy(dto.getYearOfStudy());
         }
         opening.setSeats(dto.getSeats());
+        opening.setMinCgpa(dto.getMinCgpa());
+        opening.setMaxBacklogs(dto.getMaxBacklogs());
         opening.setEligibilityNote(dto.getEligibilityNote());
         opening.setDeadline(dto.getDeadline());
         opening.setDescription(dto.getDescription());
@@ -298,6 +315,8 @@ public class PlacementOpeningService {
                 .graduationYearEnd(entity.getGraduationYearEnd())
                 .yearOfStudy(entity.getYearOfStudy() != null ? entity.getYearOfStudy() : "All Years")
                 .seats(entity.getSeats())
+                .minCgpa(entity.getMinCgpa())
+                .maxBacklogs(entity.getMaxBacklogs())
                 .eligibilityNote(entity.getEligibilityNote())
                 .publishedBy(publishedByStr)
                 .isTracked(isTracked)
@@ -317,13 +336,9 @@ public class PlacementOpeningService {
                     ? profile.getName().trim()
                     : null;
             if (name != null) {
-                if (name.toLowerCase().contains("placement cell")) {
-                    return "Published by: " + name;
-                } else {
-                    return "Published by: " + name + " Placement Cell";
-                }
+                return name;
             }
         }
-        return "Published by: Placement Cell";
+        return "Placement Cell";
     }
 }

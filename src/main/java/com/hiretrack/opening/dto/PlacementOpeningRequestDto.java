@@ -46,6 +46,13 @@ public class PlacementOpeningRequestDto {
     @jakarta.validation.constraints.Max(value = 10000, message = "Seats cannot exceed 10000")
     private Integer seats;
 
+    @jakarta.validation.constraints.DecimalMin(value = "0.0", message = "Minimum CGPA cannot be negative")
+    @jakarta.validation.constraints.DecimalMax(value = "10.0", message = "Minimum CGPA cannot exceed 10.0")
+    private Double minCgpa;
+
+    @jakarta.validation.constraints.Min(value = 0, message = "Maximum backlogs cannot be negative")
+    private Integer maxBacklogs;
+
     private String eligibilityNote;
 
     private LocalDate deadline;

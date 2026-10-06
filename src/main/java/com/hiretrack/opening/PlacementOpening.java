@@ -62,6 +62,10 @@ public class PlacementOpening {
 
     private Integer seats;
 
+    private Double minCgpa;
+
+    private Integer maxBacklogs;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
