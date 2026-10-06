@@ -1,5 +1,6 @@
 package com.hiretrack.opening;
 
+import com.hiretrack.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -55,6 +56,15 @@ public class PlacementOpening {
     private Integer graduationYearStart;
 
     private Integer graduationYearEnd;
+
+    @Column(length = 50)
+    private String yearOfStudy;
+
+    private Integer seats;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy;
 
     @Column(length = 500)
     private String eligibilityNote;

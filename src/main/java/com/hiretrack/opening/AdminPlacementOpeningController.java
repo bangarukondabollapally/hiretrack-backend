@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,24 +19,29 @@ public class AdminPlacementOpeningController {
     private final PlacementOpeningService service;
 
     @GetMapping
-    public ResponseEntity<List<PlacementOpeningResponseDto>> getAllOpenings() {
-        return ResponseEntity.ok(service.getOpenings(true));
+    public ResponseEntity<List<PlacementOpeningResponseDto>> getAllOpenings(Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.getOpenings(true, email));
     }
 
     @PostMapping
     public ResponseEntity<PlacementOpeningResponseDto> createOpening(
-            @Valid @RequestBody PlacementOpeningRequestDto dto
+            @Valid @RequestBody PlacementOpeningRequestDto dto,
+            Principal principal
     ) {
-        PlacementOpeningResponseDto created = service.createOpening(dto);
+        String email = principal != null ? principal.getName() : null;
+        PlacementOpeningResponseDto created = service.createOpening(dto, email);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PlacementOpeningResponseDto> updateOpening(
             @PathVariable Long id,
-            @Valid @RequestBody PlacementOpeningRequestDto dto
+            @Valid @RequestBody PlacementOpeningRequestDto dto,
+            Principal principal
     ) {
-        return ResponseEntity.ok(service.updateOpening(id, dto));
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.updateOpening(id, dto, email));
     }
 
     @PutMapping("/{id}/close")

@@ -42,6 +42,10 @@ public class Profile {
     @Column(length = 50)
     private String avatarPreset;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String avatarDataUrl;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

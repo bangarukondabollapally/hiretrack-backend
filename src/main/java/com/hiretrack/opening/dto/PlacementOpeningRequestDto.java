@@ -40,14 +40,20 @@ public class PlacementOpeningRequestDto {
 
     private Integer graduationYearEnd;
 
+    private String yearOfStudy;
+
+    @jakarta.validation.constraints.Min(value = 1, message = "Seats must be a positive number")
+    @jakarta.validation.constraints.Max(value = 10000, message = "Seats cannot exceed 10000")
+    private Integer seats;
+
     private String eligibilityNote;
 
     private LocalDate deadline;
 
+    @jakarta.validation.constraints.Size(max = 2000, message = "Description / Mini JD must not exceed 2000 characters")
     private String description;
 
     @NotBlank(message = "Application link is required")
-    @Pattern(regexp = "^https?://.*", message = "Application link must be a valid HTTP or HTTPS URL")
     private String applicationLink;
 
     private OpeningStatus status;

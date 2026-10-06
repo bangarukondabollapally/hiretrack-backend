@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/openings")
@@ -16,13 +18,37 @@ public class PlacementOpeningController {
 
     @GetMapping
     public ResponseEntity<List<PlacementOpeningResponseDto>> getOpenings(
-            @RequestParam(defaultValue = "false") boolean includeClosed
+            @RequestParam(defaultValue = "false") boolean includeClosed,
+            Principal principal
     ) {
-        return ResponseEntity.ok(service.getOpenings(includeClosed));
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.getOpenings(includeClosed, email));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlacementOpeningResponseDto> getOpeningById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getOpeningById(id));
+    public ResponseEntity<PlacementOpeningResponseDto> getOpeningById(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.getOpeningById(id, email));
+    }
+
+    @PostMapping("/{id}/track")
+    public ResponseEntity<Map<String, Object>> trackOpening(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.trackOpening(id, email));
+    }
+
+    @DeleteMapping("/{id}/track")
+    public ResponseEntity<Map<String, Object>> untrackOpening(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.untrackOpening(id, email));
     }
 }

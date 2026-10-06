@@ -3,11 +3,17 @@ package com.hiretrack.opening;
 import com.hiretrack.common.exception.ResourceNotFoundException;
 import com.hiretrack.opening.dto.PlacementOpeningRequestDto;
 import com.hiretrack.opening.dto.PlacementOpeningResponseDto;
+import com.hiretrack.user.Profile;
+import com.hiretrack.user.ProfileRepository;
+import com.hiretrack.user.User;
+import com.hiretrack.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,23 +21,41 @@ import java.util.stream.Collectors;
 public class PlacementOpeningService {
 
     private final PlacementOpeningRepository repository;
+    private final UserTrackedOpeningRepository trackedOpeningRepository;
+    private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
 
     @Transactional(readOnly = true)
-    public List<PlacementOpeningResponseDto> getOpenings(boolean includeClosed) {
+    public List<PlacementOpeningResponseDto> getOpenings(boolean includeClosed, String userEmail) {
+        User currentUser = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
+        Long userId = currentUser != null ? currentUser.getId() : null;
+
         List<PlacementOpening> openings = includeClosed
                 ? repository.findAllByOrderByCreatedAtDesc()
-                : repository.findOpenAndActiveOpenings(java.time.LocalDate.now());
+                : repository.findOpenAndActiveOpenings(LocalDate.now());
+
+        Set<Long> trackedOpeningIds = userId != null
+                ? trackedOpeningRepository.findTrackedOpeningIdsByUserId(userId)
+                : Collections.emptySet();
 
         return openings.stream()
-                .map(this::mapToResponseDto)
+                .map(op -> mapToResponseDto(op, trackedOpeningIds))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public PlacementOpeningResponseDto getOpeningById(Long id) {
+    public PlacementOpeningResponseDto getOpeningById(Long id, String userEmail) {
         PlacementOpening opening = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Placement opening not found with id: " + id));
-        return mapToResponseDto(opening);
+
+        User currentUser = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
+        Long userId = currentUser != null ? currentUser.getId() : null;
+
+        Set<Long> trackedOpeningIds = userId != null
+                ? trackedOpeningRepository.findTrackedOpeningIdsByUserId(userId)
+                : Collections.emptySet();
+
+        return mapToResponseDto(opening, trackedOpeningIds);
     }
 
     private void validateGraduationYears(Integer start, Integer end) {
@@ -46,6 +70,29 @@ public class PlacementOpeningService {
         }
     }
 
+    private String normalizeAndValidateLink(String rawUrl) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("Application link is required");
+        }
+        String trimmed = rawUrl.trim();
+        String lower = trimmed.toLowerCase();
+        if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) {
+            throw new IllegalArgumentException("Invalid application link scheme");
+        }
+        if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
+            trimmed = "https://" + trimmed;
+        }
+        try {
+            URI uri = new URI(trimmed);
+            if (uri.getHost() == null || uri.getHost().trim().isEmpty()) {
+                throw new IllegalArgumentException("Application link must contain a valid domain host");
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid application link format");
+        }
+        return trimmed;
+    }
+
     private String resolveEligibilityText(PlacementOpeningRequestDto dto) {
         if (dto.getEligibility() != null && !dto.getEligibility().isBlank()) {
             return dto.getEligibility();
@@ -58,7 +105,10 @@ public class PlacementOpeningService {
             if (sb.length() > 0) sb.append(" — ");
             sb.append(dto.getEligibleBranches());
         }
-        if (dto.getGraduationYearStart() != null || dto.getGraduationYearEnd() != null) {
+        if (dto.getYearOfStudy() != null && !dto.getYearOfStudy().isBlank()) {
+            if (sb.length() > 0) sb.append(" — ");
+            sb.append(dto.getYearOfStudy());
+        } else if (dto.getGraduationYearStart() != null || dto.getGraduationYearEnd() != null) {
             if (sb.length() > 0) sb.append(" — ");
             if (dto.getGraduationYearStart() != null && dto.getGraduationYearEnd() != null) {
                 if (dto.getGraduationYearStart().equals(dto.getGraduationYearEnd())) {
@@ -80,8 +130,15 @@ public class PlacementOpeningService {
     }
 
     @Transactional
-    public PlacementOpeningResponseDto createOpening(PlacementOpeningRequestDto dto) {
+    public PlacementOpeningResponseDto createOpening(PlacementOpeningRequestDto dto, String adminEmail) {
         validateGraduationYears(dto.getGraduationYearStart(), dto.getGraduationYearEnd());
+        String normalizedLink = normalizeAndValidateLink(dto.getApplicationLink());
+
+        if (dto.getDescription() != null && dto.getDescription().length() > 2000) {
+            throw new IllegalArgumentException("Description / Mini JD must not exceed 2000 characters");
+        }
+
+        User adminUser = adminEmail != null ? userRepository.findByEmail(adminEmail).orElse(null) : null;
 
         PlacementOpening opening = PlacementOpening.builder()
                 .companyName(dto.getCompanyName())
@@ -95,20 +152,28 @@ public class PlacementOpeningService {
                 .eligibleBranches(dto.getEligibleBranches())
                 .graduationYearStart(dto.getGraduationYearStart())
                 .graduationYearEnd(dto.getGraduationYearEnd())
+                .yearOfStudy(dto.getYearOfStudy() != null && !dto.getYearOfStudy().isBlank() ? dto.getYearOfStudy() : "All Years")
+                .seats(dto.getSeats())
                 .eligibilityNote(dto.getEligibilityNote())
                 .deadline(dto.getDeadline())
                 .description(dto.getDescription())
-                .applicationLink(dto.getApplicationLink())
+                .applicationLink(normalizedLink)
                 .status(dto.getStatus() != null ? dto.getStatus() : OpeningStatus.OPEN)
+                .createdBy(adminUser)
                 .build();
 
         PlacementOpening saved = repository.save(opening);
-        return mapToResponseDto(saved);
+        return mapToResponseDto(saved, Collections.emptySet());
     }
 
     @Transactional
-    public PlacementOpeningResponseDto updateOpening(Long id, PlacementOpeningRequestDto dto) {
+    public PlacementOpeningResponseDto updateOpening(Long id, PlacementOpeningRequestDto dto, String adminEmail) {
         validateGraduationYears(dto.getGraduationYearStart(), dto.getGraduationYearEnd());
+        String normalizedLink = normalizeAndValidateLink(dto.getApplicationLink());
+
+        if (dto.getDescription() != null && dto.getDescription().length() > 2000) {
+            throw new IllegalArgumentException("Description / Mini JD must not exceed 2000 characters");
+        }
 
         PlacementOpening opening = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Placement opening not found with id: " + id));
@@ -124,16 +189,20 @@ public class PlacementOpeningService {
         opening.setEligibleBranches(dto.getEligibleBranches());
         opening.setGraduationYearStart(dto.getGraduationYearStart());
         opening.setGraduationYearEnd(dto.getGraduationYearEnd());
+        if (dto.getYearOfStudy() != null) {
+            opening.setYearOfStudy(dto.getYearOfStudy());
+        }
+        opening.setSeats(dto.getSeats());
         opening.setEligibilityNote(dto.getEligibilityNote());
         opening.setDeadline(dto.getDeadline());
         opening.setDescription(dto.getDescription());
-        opening.setApplicationLink(dto.getApplicationLink());
+        opening.setApplicationLink(normalizedLink);
         if (dto.getStatus() != null) {
             opening.setStatus(dto.getStatus());
         }
 
         PlacementOpening updated = repository.save(opening);
-        return mapToResponseDto(updated);
+        return mapToResponseDto(updated, Collections.emptySet());
     }
 
     @Transactional
@@ -143,7 +212,7 @@ public class PlacementOpeningService {
 
         opening.setStatus(OpeningStatus.CLOSED);
         PlacementOpening updated = repository.save(opening);
-        return mapToResponseDto(updated);
+        return mapToResponseDto(updated, Collections.emptySet());
     }
 
     @Transactional
@@ -154,7 +223,49 @@ public class PlacementOpeningService {
         repository.deleteById(id);
     }
 
-    public PlacementOpeningResponseDto mapToResponseDto(PlacementOpening entity) {
+    @Transactional
+    public Map<String, Object> trackOpening(Long openingId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        PlacementOpening opening = repository.findById(openingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Placement opening not found with id: " + openingId));
+
+        if (!trackedOpeningRepository.existsByUserIdAndPlacementOpeningId(user.getId(), openingId)) {
+            UserTrackedOpening tracked = UserTrackedOpening.builder()
+                    .user(user)
+                    .placementOpening(opening)
+                    .build();
+            trackedOpeningRepository.save(tracked);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("openingId", openingId);
+        response.put("isTracked", true);
+        response.put("message", "Opening tracked successfully");
+        return response;
+    }
+
+    @Transactional
+    public Map<String, Object> untrackOpening(Long openingId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!repository.existsById(openingId)) {
+            throw new ResourceNotFoundException("Placement opening not found with id: " + openingId);
+        }
+
+        trackedOpeningRepository.deleteByUserIdAndPlacementOpeningId(user.getId(), openingId);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("openingId", openingId);
+        response.put("isTracked", false);
+        response.put("message", "Opening untracked successfully");
+        return response;
+    }
+
+    public PlacementOpeningResponseDto mapToResponseDto(PlacementOpening entity, Set<Long> trackedOpeningIds) {
+        String publishedByStr = resolvePublishedBy(entity);
+        boolean isTracked = trackedOpeningIds != null && trackedOpeningIds.contains(entity.getId());
+
         return PlacementOpeningResponseDto.builder()
                 .id(entity.getId())
                 .companyName(entity.getCompanyName())
@@ -168,8 +279,11 @@ public class PlacementOpeningService {
                 .eligibleBranches(entity.getEligibleBranches())
                 .graduationYearStart(entity.getGraduationYearStart())
                 .graduationYearEnd(entity.getGraduationYearEnd())
+                .yearOfStudy(entity.getYearOfStudy() != null ? entity.getYearOfStudy() : "All Years")
+                .seats(entity.getSeats())
                 .eligibilityNote(entity.getEligibilityNote())
-                .publishedBy("Placement Cell")
+                .publishedBy(publishedByStr)
+                .isTracked(isTracked)
                 .deadline(entity.getDeadline())
                 .description(entity.getDescription())
                 .applicationLink(entity.getApplicationLink())
@@ -177,5 +291,22 @@ public class PlacementOpeningService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    private String resolvePublishedBy(PlacementOpening entity) {
+        if (entity.getCreatedBy() != null) {
+            Profile profile = profileRepository.findByUserId(entity.getCreatedBy().getId()).orElse(null);
+            String name = (profile != null && profile.getName() != null && !profile.getName().trim().isEmpty())
+                    ? profile.getName().trim()
+                    : null;
+            if (name != null) {
+                if (name.toLowerCase().contains("placement cell")) {
+                    return "Published by: " + name;
+                } else {
+                    return "Published by: " + name + " Placement Cell";
+                }
+            }
+        }
+        return "Published by: Placement Cell";
     }
 }

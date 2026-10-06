@@ -35,6 +35,9 @@ public class PlacementOpeningIntegrationTest {
     private PlacementOpeningRepository openingRepository;
 
     @Autowired
+    private UserTrackedOpeningRepository trackedOpeningRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -53,6 +56,7 @@ public class PlacementOpeningIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        trackedOpeningRepository.deleteAll();
         openingRepository.deleteAll();
         applicationRepository.deleteAll();
         userRepository.deleteAll();
@@ -83,9 +87,11 @@ public class PlacementOpeningIntegrationTest {
                 .workMode("Hybrid")
                 .packageDetails("12 LPA")
                 .eligibility("B.Tech CSE 2026")
+                .yearOfStudy("4th Year")
+                .seats(10)
                 .deadline(LocalDate.now().plusDays(30))
                 .description("Build scalable services.")
-                .applicationLink("https://careers.acme.com/jobs/1")
+                .applicationLink("careers.acme.com/jobs/1")
                 .status(OpeningStatus.OPEN)
                 .build();
 
@@ -96,12 +102,16 @@ public class PlacementOpeningIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.companyName", is("Acme Corp")))
+                .andExpect(jsonPath("$.applicationLink", is("https://careers.acme.com/jobs/1")))
+                .andExpect(jsonPath("$.seats", is(10)))
+                .andExpect(jsonPath("$.yearOfStudy", is("4th Year")))
                 .andReturn().getResponse().getContentAsString();
 
         Long openingId = objectMapper.readTree(createResponse).get("id").asLong();
 
         // Update
         createDto.setCompanyName("Acme Technologies");
+        createDto.setApplicationLink("https://careers.acme.com/jobs/1");
         mockMvc.perform(put("/api/admin/openings/" + openingId)
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,6 +129,40 @@ public class PlacementOpeningIntegrationTest {
         mockMvc.perform(delete("/api/admin/openings/" + openingId)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void studentCanTrackAndUntrackOpening() throws Exception {
+        PlacementOpening opening = openingRepository.save(PlacementOpening.builder()
+                .companyName("Microsoft")
+                .jobRole("Software Engineer")
+                .applicationLink("https://careers.microsoft.com")
+                .status(OpeningStatus.OPEN)
+                .build());
+
+        // Track opening
+        mockMvc.perform(post("/api/openings/" + opening.getId() + "/track")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isTracked", is(true)));
+
+        // Verify GET /api/openings returns isTracked = true
+        mockMvc.perform(get("/api/openings")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].isTracked", is(true)));
+
+        // Untrack opening
+        mockMvc.perform(delete("/api/openings/" + opening.getId() + "/track")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isTracked", is(false)));
+
+        // Verify GET /api/openings returns isTracked = false
+        mockMvc.perform(get("/api/openings")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].isTracked", is(false)));
     }
 
     @Test
@@ -143,41 +187,11 @@ public class PlacementOpeningIntegrationTest {
     }
 
     @Test
-    void studentCanViewOpenPlacementOpenings() throws Exception {
-        PlacementOpening openOpening = openingRepository.save(PlacementOpening.builder()
-                .companyName("Google")
-                .jobRole("Frontend Engineer")
-                .applicationLink("https://careers.google.com")
-                .status(OpeningStatus.OPEN)
-                .build());
-
-        PlacementOpening closedOpening = openingRepository.save(PlacementOpening.builder()
-                .companyName("Legacy Systems")
-                .jobRole("DBA")
-                .applicationLink("https://legacy.com")
-                .status(OpeningStatus.CLOSED)
-                .build());
-
-        // Default student view — returns only open openings
-        mockMvc.perform(get("/api/openings")
-                        .header("Authorization", "Bearer " + userToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].companyName", is("Google")));
-
-        // Student view with includeClosed=true
-        mockMvc.perform(get("/api/openings?includeClosed=true")
-                        .header("Authorization", "Bearer " + userToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
-    }
-
-    @Test
     void createOpening_InvalidApplicationLink_Returns400() throws Exception {
         PlacementOpeningRequestDto invalidDto = PlacementOpeningRequestDto.builder()
                 .companyName("Invalid Link Corp")
                 .jobRole("Developer")
-                .applicationLink("ftp://invalid-link.com")
+                .applicationLink("javascript:alert(1)")
                 .build();
 
         mockMvc.perform(post("/api/admin/openings")

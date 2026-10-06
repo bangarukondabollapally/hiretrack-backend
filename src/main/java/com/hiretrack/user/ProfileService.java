@@ -47,6 +47,18 @@ public class ProfileService {
             }
         }
 
+        if (dto.getAvatarDataUrl() != null && !dto.getAvatarDataUrl().trim().isEmpty()) {
+            String dataUrl = dto.getAvatarDataUrl().trim();
+            if (!dataUrl.startsWith("data:image/jpeg;base64,") &&
+                !dataUrl.startsWith("data:image/png;base64,") &&
+                !dataUrl.startsWith("data:image/webp;base64,")) {
+                throw new IllegalArgumentException("avatarDataUrl must be a JPEG, PNG, or WebP base64 data URL");
+            }
+            if (dataUrl.length() > 270000) {
+                throw new IllegalArgumentException("avatarDataUrl exceeds 200 KB size limit");
+            }
+        }
+
         Profile profile = profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> Profile.builder().user(user).build());
 
@@ -55,6 +67,9 @@ public class ProfileService {
         }
         if (dto.getAvatarPreset() != null) {
             profile.setAvatarPreset(dto.getAvatarPreset().trim().isEmpty() ? null : dto.getAvatarPreset().trim());
+        }
+        if (dto.getAvatarDataUrl() != null) {
+            profile.setAvatarDataUrl(dto.getAvatarDataUrl().trim().isEmpty() ? null : dto.getAvatarDataUrl().trim());
         }
         if (dto.getResumeText() != null) {
             profile.setResumeText(dto.getResumeText());
@@ -77,6 +92,7 @@ public class ProfileService {
         return ProfileDto.builder()
                 .name(profile.getName() != null ? profile.getName() : "")
                 .avatarPreset(profile.getAvatarPreset())
+                .avatarDataUrl(profile.getAvatarDataUrl())
                 .resumeText(profile.getResumeText() != null ? profile.getResumeText() : "")
                 .targetRole(profile.getTargetRole() != null ? profile.getTargetRole() : "")
                 .yearsOfExperience(profile.getYearsOfExperience())

@@ -25,4 +25,7 @@ public class ProfileDto {
     private String experienceSummary;
 
     private String avatarPreset;
+
+    @Size(max = 270000, message = "avatarDataUrl must not exceed 270KB")
+    private String avatarDataUrl;
 }

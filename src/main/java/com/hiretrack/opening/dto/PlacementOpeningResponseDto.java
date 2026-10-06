@@ -26,8 +26,11 @@ public class PlacementOpeningResponseDto {
     private String eligibleBranches;
     private Integer graduationYearStart;
     private Integer graduationYearEnd;
+    private String yearOfStudy;
+    private Integer seats;
     private String eligibilityNote;
     private String publishedBy;
+    private Boolean isTracked;
     private LocalDate deadline;
     private String description;
     private String applicationLink;
