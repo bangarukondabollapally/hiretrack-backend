@@ -152,6 +152,14 @@ public class PlacementOpeningIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].isTracked", is(true)));
 
+        // Verify GET /api/openings/tracked returns the tracked opening
+        mockMvc.perform(get("/api/openings/tracked")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(opening.getId().intValue())))
+                .andExpect(jsonPath("$[0].isTracked", is(true)));
+
         // Untrack opening
         mockMvc.perform(delete("/api/openings/" + opening.getId() + "/track")
                         .header("Authorization", "Bearer " + userToken))
@@ -163,6 +171,12 @@ public class PlacementOpeningIntegrationTest {
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].isTracked", is(false)));
+
+        // Verify GET /api/openings/tracked returns empty list
+        mockMvc.perform(get("/api/openings/tracked")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test

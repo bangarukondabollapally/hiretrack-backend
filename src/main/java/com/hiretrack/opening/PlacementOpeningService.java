@@ -58,6 +58,23 @@ public class PlacementOpeningService {
         return mapToResponseDto(opening, trackedOpeningIds);
     }
 
+    @Transactional(readOnly = true)
+    public List<PlacementOpeningResponseDto> getTrackedOpenings(String userEmail) {
+        User currentUser = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
+        if (currentUser == null) {
+            return Collections.emptyList();
+        }
+
+        List<PlacementOpening> trackedOpenings = trackedOpeningRepository.findTrackedOpeningsByUserId(currentUser.getId());
+        Set<Long> trackedOpeningIds = trackedOpenings.stream()
+                .map(PlacementOpening::getId)
+                .collect(Collectors.toSet());
+
+        return trackedOpenings.stream()
+                .map(op -> mapToResponseDto(op, trackedOpeningIds))
+                .collect(Collectors.toList());
+    }
+
     private void validateGraduationYears(Integer start, Integer end) {
         if (start != null && (start < 2000 || start > 2100)) {
             throw new IllegalArgumentException("Graduation start year must be a valid year between 2000 and 2100");

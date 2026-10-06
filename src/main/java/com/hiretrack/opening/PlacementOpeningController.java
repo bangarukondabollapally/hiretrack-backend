@@ -25,6 +25,12 @@ public class PlacementOpeningController {
         return ResponseEntity.ok(service.getOpenings(includeClosed, email));
     }
 
+    @GetMapping("/tracked")
+    public ResponseEntity<List<PlacementOpeningResponseDto>> getTrackedOpenings(Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(service.getTrackedOpenings(email));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PlacementOpeningResponseDto> getOpeningById(
             @PathVariable Long id,
