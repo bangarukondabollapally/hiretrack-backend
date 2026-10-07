@@ -60,8 +60,6 @@ public class PlacementOpening {
     @Column(length = 50)
     private String yearOfStudy;
 
-    private Integer seats;
-
     private Double minCgpa;
 
     private Integer maxBacklogs;
@@ -69,9 +67,6 @@ public class PlacementOpening {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
-
-    @Column(length = 500)
-    private String eligibilityNote;
 
     private LocalDate deadline;
 

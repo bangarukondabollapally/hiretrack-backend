@@ -73,8 +73,8 @@ public class PlacementOpeningIntegrationTest {
                 .role(Role.USER)
                 .build());
 
-        adminToken = jwtService.generateToken(adminUser.getEmail(), adminUser.getId());
-        userToken = jwtService.generateToken(studentUser.getEmail(), studentUser.getId());
+        adminToken = jwtService.generateToken(adminUser.getEmail(), adminUser.getId(), adminUser.getRole());
+        userToken = jwtService.generateToken(studentUser.getEmail(), studentUser.getId(), studentUser.getRole());
     }
 
     @Test
@@ -88,7 +88,6 @@ public class PlacementOpeningIntegrationTest {
                 .packageDetails("12 LPA")
                 .eligibility("B.Tech CSE 2026")
                 .yearOfStudy("4th Year")
-                .seats(10)
                 .deadline(LocalDate.now().plusDays(30))
                 .description("Build scalable services.")
                 .applicationLink("careers.acme.com/jobs/1")
@@ -103,7 +102,6 @@ public class PlacementOpeningIntegrationTest {
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.companyName", is("Acme Corp")))
                 .andExpect(jsonPath("$.applicationLink", is("https://careers.acme.com/jobs/1")))
-                .andExpect(jsonPath("$.seats", is(10)))
                 .andExpect(jsonPath("$.yearOfStudy", is("4th Year")))
                 .andReturn().getResponse().getContentAsString();
 

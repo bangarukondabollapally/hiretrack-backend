@@ -139,10 +139,6 @@ public class PlacementOpeningService {
                 sb.append("up to ").append(dto.getGraduationYearEnd());
             }
         }
-        if (dto.getEligibilityNote() != null && !dto.getEligibilityNote().isBlank()) {
-            if (sb.length() > 0) sb.append(" (").append(dto.getEligibilityNote()).append(")");
-            else sb.append(dto.getEligibilityNote());
-        }
         return sb.length() > 0 ? sb.toString() : null;
     }
 
@@ -177,10 +173,8 @@ public class PlacementOpeningService {
                 .graduationYearStart(dto.getGraduationYearStart())
                 .graduationYearEnd(dto.getGraduationYearEnd())
                 .yearOfStudy(dto.getYearOfStudy() != null && !dto.getYearOfStudy().isBlank() ? dto.getYearOfStudy() : "All Years")
-                .seats(dto.getSeats())
                 .minCgpa(dto.getMinCgpa())
                 .maxBacklogs(dto.getMaxBacklogs())
-                .eligibilityNote(dto.getEligibilityNote())
                 .deadline(dto.getDeadline())
                 .description(dto.getDescription())
                 .applicationLink(normalizedLink)
@@ -224,10 +218,8 @@ public class PlacementOpeningService {
         if (dto.getYearOfStudy() != null) {
             opening.setYearOfStudy(dto.getYearOfStudy());
         }
-        opening.setSeats(dto.getSeats());
         opening.setMinCgpa(dto.getMinCgpa());
         opening.setMaxBacklogs(dto.getMaxBacklogs());
-        opening.setEligibilityNote(dto.getEligibilityNote());
         opening.setDeadline(dto.getDeadline());
         opening.setDescription(dto.getDescription());
         opening.setApplicationLink(normalizedLink);
@@ -314,10 +306,8 @@ public class PlacementOpeningService {
                 .graduationYearStart(entity.getGraduationYearStart())
                 .graduationYearEnd(entity.getGraduationYearEnd())
                 .yearOfStudy(entity.getYearOfStudy() != null ? entity.getYearOfStudy() : "All Years")
-                .seats(entity.getSeats())
                 .minCgpa(entity.getMinCgpa())
                 .maxBacklogs(entity.getMaxBacklogs())
-                .eligibilityNote(entity.getEligibilityNote())
                 .publishedBy(publishedByStr)
                 .isTracked(isTracked)
                 .deadline(entity.getDeadline())

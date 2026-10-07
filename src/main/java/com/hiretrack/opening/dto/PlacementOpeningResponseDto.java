@@ -27,10 +27,8 @@ public class PlacementOpeningResponseDto {
     private Integer graduationYearStart;
     private Integer graduationYearEnd;
     private String yearOfStudy;
-    private Integer seats;
     private Double minCgpa;
     private Integer maxBacklogs;
-    private String eligibilityNote;
     private String publishedBy;
     private Boolean isTracked;
     private LocalDate deadline;
