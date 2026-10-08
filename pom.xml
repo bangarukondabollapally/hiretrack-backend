@@ -43,12 +43,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 — in-memory database for tests only -->
+        <!-- H2 — in-memory database -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
         </dependency>
+
 
         <!-- Bean Validation — @Valid, @NotBlank, @Size, @Email on DTOs -->
         <dependency>
