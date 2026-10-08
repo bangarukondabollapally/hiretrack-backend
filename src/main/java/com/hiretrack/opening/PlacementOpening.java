@@ -50,6 +50,9 @@ public class PlacementOpening {
     @Column(length = 50)
     private String degree;
 
+    @Column(name = "degree_types", length = 255)
+    private String degreeTypes;
+
     @Column(length = 255)
     private String eligibleBranches;
 

@@ -110,12 +110,43 @@ public class PlacementOpeningService {
         return trimmed;
     }
 
+    public static final List<String> ALLOWED_DEGREE_TYPES = List.of(
+            "B.Tech / B.E.",
+            "M.Tech / M.E.",
+            "BCA",
+            "MCA",
+            "B.Sc",
+            "M.Sc",
+            "BBA",
+            "MBA"
+    );
+
+    private void validateDegreeTypes(String degreeTypes) {
+        if (degreeTypes == null || degreeTypes.isBlank()) {
+            throw new IllegalArgumentException("At least one degree type must be selected");
+        }
+        List<String> degrees = Arrays.stream(degreeTypes.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+        if (degrees.isEmpty()) {
+            throw new IllegalArgumentException("At least one degree type must be selected");
+        }
+        for (String degree : degrees) {
+            if (!ALLOWED_DEGREE_TYPES.contains(degree)) {
+                throw new IllegalArgumentException("Unknown or invalid degree type: " + degree);
+            }
+        }
+    }
+
     private String resolveEligibilityText(PlacementOpeningRequestDto dto) {
         if (dto.getEligibility() != null && !dto.getEligibility().isBlank()) {
             return dto.getEligibility();
         }
         StringBuilder sb = new StringBuilder();
-        if (dto.getDegree() != null && !dto.getDegree().isBlank()) {
+        if (dto.getDegreeTypes() != null && !dto.getDegreeTypes().isBlank()) {
+            sb.append(dto.getDegreeTypes());
+        } else if (dto.getDegree() != null && !dto.getDegree().isBlank()) {
             sb.append(dto.getDegree());
         }
         if (dto.getEligibleBranches() != null && !dto.getEligibleBranches().isBlank()) {
@@ -144,6 +175,7 @@ public class PlacementOpeningService {
 
     @Transactional
     public PlacementOpeningResponseDto createOpening(PlacementOpeningRequestDto dto, String adminEmail) {
+        validateDegreeTypes(dto.getDegreeTypes());
         validateGraduationYears(dto.getGraduationYearStart(), dto.getGraduationYearEnd());
         String normalizedLink = normalizeAndValidateLink(dto.getApplicationLink());
 
@@ -168,7 +200,8 @@ public class PlacementOpeningService {
                 .workMode(dto.getWorkMode())
                 .packageDetails(dto.getPackageDetails())
                 .eligibility(resolveEligibilityText(dto))
-                .degree(dto.getDegree())
+                .degree(dto.getDegree() != null ? dto.getDegree() : dto.getDegreeTypes())
+                .degreeTypes(dto.getDegreeTypes())
                 .eligibleBranches(dto.getEligibleBranches())
                 .graduationYearStart(dto.getGraduationYearStart())
                 .graduationYearEnd(dto.getGraduationYearEnd())
@@ -188,6 +221,7 @@ public class PlacementOpeningService {
 
     @Transactional
     public PlacementOpeningResponseDto updateOpening(Long id, PlacementOpeningRequestDto dto, String adminEmail) {
+        validateDegreeTypes(dto.getDegreeTypes());
         validateGraduationYears(dto.getGraduationYearStart(), dto.getGraduationYearEnd());
         String normalizedLink = normalizeAndValidateLink(dto.getApplicationLink());
 
@@ -211,7 +245,8 @@ public class PlacementOpeningService {
         opening.setWorkMode(dto.getWorkMode());
         opening.setPackageDetails(dto.getPackageDetails());
         opening.setEligibility(resolveEligibilityText(dto));
-        opening.setDegree(dto.getDegree());
+        opening.setDegree(dto.getDegree() != null ? dto.getDegree() : dto.getDegreeTypes());
+        opening.setDegreeTypes(dto.getDegreeTypes());
         opening.setEligibleBranches(dto.getEligibleBranches());
         opening.setGraduationYearStart(dto.getGraduationYearStart());
         opening.setGraduationYearEnd(dto.getGraduationYearEnd());
@@ -302,6 +337,7 @@ public class PlacementOpeningService {
                 .packageDetails(entity.getPackageDetails())
                 .eligibility(entity.getEligibility())
                 .degree(entity.getDegree())
+                .degreeTypes(entity.getDegreeTypes())
                 .eligibleBranches(entity.getEligibleBranches())
                 .graduationYearStart(entity.getGraduationYearStart())
                 .graduationYearEnd(entity.getGraduationYearEnd())

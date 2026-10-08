@@ -34,6 +34,9 @@ public class PlacementOpeningRequestDto {
 
     private String degree;
 
+    @jakarta.validation.constraints.Size(max = 255, message = "Degree types cannot exceed 255 characters")
+    private String degreeTypes;
+
     @jakarta.validation.constraints.Size(max = 255, message = "Eligible branches cannot exceed 255 characters")
     private String eligibleBranches;
 

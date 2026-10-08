@@ -23,6 +23,7 @@ public class PlacementOpeningResponseDto {
     private String packageDetails;
     private String eligibility;
     private String degree;
+    private String degreeTypes;
     private String eligibleBranches;
     private Integer graduationYearStart;
     private Integer graduationYearEnd;

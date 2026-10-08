@@ -104,6 +104,12 @@ public class PromptBuilder {
                         if (opening.getWorkMode() != null) sb.append("Work Mode: ").append(opening.getWorkMode()).append("\n");
                         if (opening.getPackageDetails() != null) sb.append("Package/Stipend: ").append(opening.getPackageDetails()).append("\n");
                         if (opening.getEligibility() != null) sb.append("Eligibility: ").append(opening.getEligibility()).append("\n");
+                        if (opening.getDegreeTypes() != null && !opening.getDegreeTypes().isBlank()) {
+                            sb.append("Degree Types: ").append(opening.getDegreeTypes()).append("\n");
+                        }
+                        if (opening.getEligibleBranches() != null && !opening.getEligibleBranches().isBlank()) {
+                            sb.append("Eligible Branches: ").append(opening.getEligibleBranches()).append("\n");
+                        }
                         if (opening.getDeadline() != null) sb.append("Deadline: ").append(opening.getDeadline()).append("\n");
                         sb.append("Status: ").append(opening.getStatus()).append("\n");
                         if (opening.getDescription() != null && !opening.getDescription().trim().isEmpty()) {

@@ -86,6 +86,7 @@ public class PlacementOpeningIntegrationTest {
                 .location("Bengaluru")
                 .workMode("Hybrid")
                 .packageDetails("12 LPA")
+                .degreeTypes("B.Tech / B.E., M.Tech / M.E., BCA")
                 .eligibility("B.Tech CSE 2026")
                 .yearOfStudy("4th Year")
                 .deadline(LocalDate.now().plusDays(30))
@@ -101,6 +102,7 @@ public class PlacementOpeningIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.companyName", is("Acme Corp")))
+                .andExpect(jsonPath("$.degreeTypes", is("B.Tech / B.E., M.Tech / M.E., BCA")))
                 .andExpect(jsonPath("$.applicationLink", is("https://careers.acme.com/jobs/1")))
                 .andExpect(jsonPath("$.yearOfStudy", is("4th Year")))
                 .andReturn().getResponse().getContentAsString();
@@ -115,7 +117,8 @@ public class PlacementOpeningIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.companyName", is("Acme Technologies")));
+                .andExpect(jsonPath("$.companyName", is("Acme Technologies")))
+                .andExpect(jsonPath("$.degreeTypes", is("B.Tech / B.E., M.Tech / M.E., BCA")));
 
         // Close
         mockMvc.perform(put("/api/admin/openings/" + openingId + "/close")
@@ -182,6 +185,7 @@ public class PlacementOpeningIntegrationTest {
         PlacementOpeningRequestDto createDto = PlacementOpeningRequestDto.builder()
                 .companyName("Hack Corp")
                 .jobRole("Hacker")
+                .degreeTypes("B.Tech / B.E.")
                 .applicationLink("https://hack.com")
                 .build();
 
@@ -203,6 +207,7 @@ public class PlacementOpeningIntegrationTest {
         PlacementOpeningRequestDto invalidDto = PlacementOpeningRequestDto.builder()
                 .companyName("Invalid Link Corp")
                 .jobRole("Developer")
+                .degreeTypes("B.Tech / B.E.")
                 .applicationLink("javascript:alert(1)")
                 .build();
 
@@ -211,5 +216,39 @@ public class PlacementOpeningIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createOpening_MissingDegreeTypes_Returns400() throws Exception {
+        PlacementOpeningRequestDto invalidDto = PlacementOpeningRequestDto.builder()
+                .companyName("No Degree Corp")
+                .jobRole("Developer")
+                .degreeTypes(null)
+                .applicationLink("https://careers.company.com")
+                .build();
+
+        mockMvc.perform(post("/api/admin/openings")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("At least one degree type must be selected")));
+    }
+
+    @Test
+    void createOpening_InvalidDegreeType_Returns400() throws Exception {
+        PlacementOpeningRequestDto invalidDto = PlacementOpeningRequestDto.builder()
+                .companyName("Unknown Degree Corp")
+                .jobRole("Developer")
+                .degreeTypes("Ph.D, B.Tech / B.E.")
+                .applicationLink("https://careers.company.com")
+                .build();
+
+        mockMvc.perform(post("/api/admin/openings")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Unknown or invalid degree type")));
     }
 }
