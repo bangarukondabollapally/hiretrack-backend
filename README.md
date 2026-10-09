@@ -30,14 +30,20 @@ Ensure the following variables are configured in `.env`:
 
 | Variable | Required | Description | Example / Default |
 |---|---|---|---|
-| `MYSQL_ROOT_PASSWORD` | Yes | MySQL root password for Docker container | (Generate a strong password) |
-| `DB_URL` | Yes | JDBC URL | `jdbc:mysql://localhost:3307/hiretrack` (Local) / `jdbc:mysql://mysql:3306/hiretrack` (Docker) |
+| `DB_HOST` | Yes | MySQL hostname | `localhost` |
+| `DB_PORT` | Yes | MySQL port | `3307` (Docker host) / `3306` (container) |
+| `DB_NAME` | Yes | Database name | `hiretrack` |
+| `DB_SSL_MODE` | Yes | MySQL SSL mode | `DISABLED` (local) / `REQUIRED` (cloud) |
 | `DB_USERNAME` | Yes | Database user name | `hiretrack_user` |
-| `DB_PASSWORD` | Yes | Database password | (Generate a strong password) |
-| `JWT_SECRET` | Yes | HMAC-SHA secret (at least 256 bits) | (Generate a strong secret key) |
-| `JWT_EXPIRATION_MS` | Optional | JWT validity duration in milliseconds | `86400000` (24 hours) |
-| `GROQ_API_KEY` | Yes | API Key from Groq Cloud Console | `gsk_...` |
-| `GROQ_MODEL` | Optional | Groq LLM model name | `llama-3.3-70b-versatile` |
+| `DB_PASSWORD` | Yes | Database password | (generate a strong password) |
+| `MYSQL_ROOT_PASSWORD` | Docker | MySQL root password for the Docker container | (generate a strong password) |
+| `JWT_SECRET` | Yes | HMAC-SHA secret (at least 256 bits) | (generate a strong secret key) |
+| `JWT_EXPIRATION_MS` | No | JWT validity in milliseconds | `86400000` (24 hours) |
+| `GROQ_API_KEY` | Yes | API key from Groq Cloud Console | `gsk_...` |
+| `GROQ_MODEL` | No | Groq LLM model name | `llama-3.3-70b-versatile` |
+| `FRONTEND_URL` | Yes | Frontend origin for CORS | `http://localhost:5173` |
+| `ADMIN_EMAIL` | No | Auto-provisioned admin email | `admin@hiretrack.local` |
+| `ADMIN_PASSWORD` | No | Auto-provisioned admin password | `admin123456` |
 
 ---
 
@@ -123,11 +129,13 @@ src/main/java/com/hiretrack/
 ├── HiretrackApplication.java   — Spring Boot entry point
 ├── auth/                       — JWT Authentication (Register, Login, Password Hashing)
 ├── user/                       — User entity & Profile management (Resume Text, Target Role)
+├── opening/                    — Placement Opening entity, DTOs, admin & student controllers
 ├── application/                — Job Application CRUD & Filtering
 ├── interview/                  — Interview Schedule & Timeline Tracking
 ├── tag/                        — Application Tags & Association
 ├── dashboard/                  — Metrics Aggregation (Application Counts, Conversion Rates)
 ├── ai/                         — Groq AI integration & Contextual Prompt Builder
+├── assistant/                  — Conversation & Chat Message persistence (history endpoints)
 ├── common/                     — Global Exception Handler, Health Endpoint, Custom Exceptions
 └── config/                     — Security Filter Chain, CORS, OpenAPI Swagger Config
 ```
